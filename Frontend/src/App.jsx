@@ -9,11 +9,10 @@ import Tiptap from './testComponents/Tiptap.jsx'
 function App() {
 
   return (
-    <div className=" relative w-full h-screen bg-[#ffffff]">
-      {/* <Background /> */}
-      
-      <ModalBtn />
-      {/* <Foreground /> #042a34 */}
+    <div className=" relative w-full h-screen bg-[#042a34]">
+      <Background />
+      {/* <ModalBtn /> */}
+      <Foreground /> 
 
 
 

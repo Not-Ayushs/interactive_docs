@@ -2,7 +2,7 @@ import { useEditor, EditorContent } from '@tiptap/react'
 import { FloatingMenu, BubbleMenu } from '@tiptap/react/menus'
 import StarterKit from '@tiptap/starter-kit'
 
-const Tiptap = () => {
+const Editor = () => {
     const editor = useEditor({
         editorProps: {
             attributes: {
@@ -22,4 +22,4 @@ const Tiptap = () => {
     )
 }
 
-export default Tiptap
+export default Editor
