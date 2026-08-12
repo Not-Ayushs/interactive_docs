@@ -31,7 +31,7 @@ export default function Card({ data, reference }) {
                 </div>
 
             </motion.div>
-            <OpenCard showModal={showModal} setShowModal={setShowModal}/>
+            <OpenCard showModal={showModal} setShowModal={setShowModal} title={data.desc}/>
         </>
     )
 }

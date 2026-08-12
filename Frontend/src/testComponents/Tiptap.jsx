@@ -2,7 +2,7 @@ import { useEditor, EditorContent } from '@tiptap/react'
 import { FloatingMenu, BubbleMenu } from '@tiptap/react/menus'
 import StarterKit from '@tiptap/starter-kit'
 
-const Tiptap = () => {
+const Tiptap = ({title}) => {
     const editor = useEditor({
         editorProps: {
             attributes: {
@@ -10,7 +10,7 @@ const Tiptap = () => {
             },
         },
         extensions: [StarterKit], // define your extension array
-        content: '<p>Hello World!</p>', // initial content
+        content: `<h3>${title}</h3>`, // initial content
     })
 
     return (
