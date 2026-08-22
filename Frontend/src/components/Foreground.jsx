@@ -1,31 +1,45 @@
 import Card from './Card'
-import {useRef} from 'react'
+import {useRef, useState, useEffect} from 'react'
 import AddDocButton from './AddDocButton'
+import AddDocModal from './AddDocModal'
+
 export default function Foreground() {
     const ref = useRef(null);
-    const data = [
-        // IconBase, DecompressionStream, filesize, closeORdownload, tagdetails
-        { desc: "This is the doc content you are seeying rn", filesize: ".9mb", close: true, tag: { isOpen: false , tagTitle: "MBBS", tagColor: "green" }},
-        { desc: "This is the second doc content you are seeying ", filesize: ".9mb", close: true, tag: { isOpen: false , tagTitle: "Engineering", tagColor: "green" }},
-        { desc: "This is the doc content you are seeying rn", filesize: ".9mb", close: true, tag: { isOpen: false , tagTitle: "Doenload Now", tagColor: "sky" }},
-        { desc: "This is the doc content you are seeying rn", filesize: ".9mb", close: true, tag: { isOpen: false , tagTitle: "Doenload Now", tagColor: "blue" }},
-        // { desc: "This is the doc content you are seeying rn", filesize: ".9mb", close: true, tag: { isOpen: false , tagTitle: "Doenload Now", tagColor: "amber" }},
-        // { desc: "This is the doc content you are seeying rn", filesize: ".9mb", close: true, tag: { isOpen: false , tagTitle: "Doenload ow", tagColor: "green" }},
-        // { desc: "This is the doc content you are seeying rn", filesize: ".9mb", close: true, tag: { isOpen: false , tagTitle: "Doenload Now", tagColor: "green" }},
-        // { desc: "This is the doc content you are seeying rn", filesize: ".9mb", close: true, tag: { isOpen: false , tagTitle: "Doenload Now", tagColor: "green" }},
-    ];
+    const [data, setData] = useState([]);
+    const [showAddModal, setShowAddModal] = useState(false);
+
+    useEffect(() => {
+        fetch("http://localhost:5000/api/documents")
+            .then(res => res.json())
+            .then(docs => setData(docs))
+            .catch(err => console.error("Error fetching documents:", err));
+    }, []);
+
+    const handleAddDoc = (newDoc) => {
+        setData(prev => [...prev, newDoc]);
+    };
+
+    const handleUpdateDoc = (updatedDoc) => {
+        setData(prev => prev.map(doc => doc._id === updatedDoc._id ? updatedDoc : doc));
+    };
 
     return (
         <>
-            <div ref={ref} className=" fixed z-3 top-0 left-0 w-full h-full flex gap-10 flex-wrap p-20">
-
+            <div ref={ref} className=" fixed z-3 top-0 left-0 w-full h-full flex gap-5 flex-wrap p-20">
                 {data.map((item, index) => (
-                    <Card key={index} data={item} reference={ref}/>
+                    <Card key={item._id || index} data={item} reference={ref} onUpdate={handleUpdateDoc}/>
                 ))}
             </div>
-            <div className='text-white text-[4.3vh] rounded-full bg-green-300 absolute bottom-10 right-5 w-fit h-fit z-60 flex justify-center items-center '>
-                <AddDocButton />
+            
+            <div className='text-white text-[4.3vh] rounded-full bg-green-300 absolute bottom-10 right-5 w-fit h-fit z-60 flex justify-center items-center hover:scale-115 transition-transform duration-200'>
+                <AddDocButton onClick={() => setShowAddModal(true)} />
             </div>
+
+            <AddDocModal 
+                showModal={showAddModal} 
+                setShowModal={setShowAddModal} 
+                onAdd={handleAddDoc} 
+            />
         </>
     )
 }
