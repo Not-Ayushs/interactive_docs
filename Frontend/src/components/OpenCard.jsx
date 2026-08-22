@@ -50,11 +50,11 @@ export default function OpenCard({ showModal, setShowModal, doc, onUpdate }) {
 
     return (
         <>
-            {showModal && <div className=" px-10 pt-24 pb-12 overflow-y-scroll h-[89vh] bg-zinc-950 w-[40vw] text-white z-100 rounded-xl absolute top-1/2 left-1/2 translate-x-[-50%] translate-y-[-50%] border border-zinc-800 shadow-2xl">
+            {showModal && <div className=" md:px-10 md:pt-24 md:pb-12 px-3 pt-6 pb-3 overflow-y-scroll md:h-[89vh] h-[49vh] bg-zinc-950 md:w-[40vw] w-[70vw] text-white z-100 rounded-xl absolute top-1/2 left-1/2 translate-x-[-50%] translate-y-[-50%] border border-zinc-800 shadow-2xl">
                 <div><Editor title={doc?.desc || ""} onChange={setCurrentContent}/></div>
-                <button onClick={closeModal} className='absolute right-2 top-2 cursor-pointer text-zinc-400 hover:text-red-500 transition-colors' ><IoIosCloseCircle size={24} />
+                <button onClick={closeModal} className='absolute right-2 top-2 cursor-pointer text-zinc-400 hover:text-red-500 transition-colors' ><IoIosCloseCircle size={16 } />
                 </button>
-                <button onClick={handleSave} className="absolute right-6 bottom-6 rounded-xl bg-green-400 hover:bg-green-600 text-zinc-950 cursor-pointer py-2 px-5 font-bold transition-all shadow-md active:scale-95">Save</button>
+                <button onClick={handleSave} className="sm:text-[8px] absolute right-6 bottom-6 rounded-xl bg-green-400 hover:bg-green-600 text-zinc-950 cursor-pointer md:py-2 md:px-5 px-2 py-1  font-bold transition-all shadow-md active:scale-95">Save</button>
             </div>}
         </>
     )

@@ -21,10 +21,10 @@ const Editor = ({title, onChange}) => {
     })
 
     return (
-        <div className="w-full">
+        <div className="w-full ">
             <EditorContent editor={editor} />
             <FloatingMenu editor={editor}></FloatingMenu>
-            <BubbleMenu editor={editor}>copy|paste|select All</BubbleMenu>
+            <BubbleMenu editor={editor}></BubbleMenu>
         </div>
     )
 }
