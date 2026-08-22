@@ -22,7 +22,8 @@ export default function OpenCard({ showModal, setShowModal, doc, onUpdate }) {
             return;
         }
 
-        fetch(`http://localhost:5000/api/documents/${doc._id}`, {
+        const apiBaseUrl = import.meta.env.VITE_API_URL || "http://localhost:5000";
+        fetch(`${apiBaseUrl}/api/documents/${doc._id}`, {
             method: "PUT",
             headers: {
                 "Content-Type": "application/json"

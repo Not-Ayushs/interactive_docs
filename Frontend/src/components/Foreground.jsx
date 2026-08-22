@@ -9,7 +9,8 @@ export default function Foreground() {
     const [showAddModal, setShowAddModal] = useState(false);
 
     useEffect(() => {
-        fetch("http://localhost:5000/api/documents")
+        const apiBaseUrl = import.meta.env.VITE_API_URL || "http://localhost:5000";
+        fetch(`${apiBaseUrl}/api/documents`)
             .then(res => res.json())
             .then(docs => setData(docs))
             .catch(err => console.error("Error fetching documents:", err));

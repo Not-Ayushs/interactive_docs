@@ -27,7 +27,8 @@ export default function AddDocModal({ showModal, setShowModal, onAdd }) {
             }
         };
 
-        fetch("http://localhost:5000/api/documents", {
+        const apiBaseUrl = import.meta.env.VITE_API_URL || "http://localhost:5000";
+        fetch(`${apiBaseUrl}/api/documents`, {
             method: "POST",
             headers: {
                 "Content-Type": "application/json"
