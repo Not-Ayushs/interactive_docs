@@ -4,18 +4,17 @@ import Background from './components/Background.jsx'
 import Foreground from './components/Foreground.jsx'
 import ModalBtn from './testComponents/ModalBtn.jsx'
 import Tiptap from './testComponents/Tiptap.jsx'
+import Sidebar from './components/Sidebar.jsx'
 
 
 function App() {
-// c3d0d4 042a34
+  const [isSidebarOpen, setIsSidebarOpen] = useState(true);
+
   return (
-    <div className=" relative w-full h-screen bg-[#0A0E15]">
+    <div className=" relative w-full h-screen bg-[#0A0E15] overflow-hidden">
+      <Sidebar isOpen={isSidebarOpen} setIsOpen={setIsSidebarOpen} />
       <Background />
-      {/* <ModalBtn /> */}
-      <Foreground /> 
-
-
-
+      <Foreground isSidebarOpen={isSidebarOpen} />
     </div>
   )
 }
