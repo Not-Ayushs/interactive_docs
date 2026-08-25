@@ -26,7 +26,7 @@ export default function Card({ data, reference, onUpdate }) {
 
     return (
         <>
-            <motion.div layout drag dragConstraints={reference} whileDrag={{ cursor: "grabbing", scale: 1.1 }} className="md:h-52 shrink-0 overflow-hidden relative rounded-[14px] w-60 h-36 bg-zinc-900/90 text-white md:px-7 md:py-10 px-3 py-6">
+            <motion.div layout drag dragConstraints={reference} whileDrag={{ cursor: "grabbing", scale: 1.1 }} className="md:h-52 shrink-0 overflow-hidden relative rounded-[48px] w-60 h-36 bg-zinc-900/90 text-white md:px-7 md:py-10 px-3 py-6">
                 <IoDocumentTextOutline />
 
                 <p

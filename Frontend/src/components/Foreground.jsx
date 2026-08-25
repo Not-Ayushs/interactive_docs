@@ -4,7 +4,7 @@ import AddDocButton from './AddDocButton'
 import AddDocModal from './AddDocModal'
 import { motion } from 'framer-motion'
 
-export default function Foreground({ isSidebarOpen }) {
+export default function Foreground() {
     const ref = useRef(null);
     const [data, setData] = useState([]);
     const [showAddModal, setShowAddModal] = useState(false);
@@ -30,11 +30,7 @@ export default function Foreground({ isSidebarOpen }) {
             <motion.div 
                 layout
                 ref={ref} 
-                className={`fixed z-20 top-0 h-full flex gap-5 flex-wrap p-20 ${
-                    isSidebarOpen 
-                        ? 'left-64 w-[calc(100%-16rem)]' 
-                        : 'left-16 w-[calc(100%-4rem)]'
-                }`}
+                className="fixed z-20 top-0 left-0 w-full h-full flex gap-5 flex-wrap p-20"
             >
                 {data.map((item, index) => (
                     <Card key={item._id || index} data={item} reference={ref} onUpdate={handleUpdateDoc}/>

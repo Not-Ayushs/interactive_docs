@@ -4,6 +4,7 @@ import dotenv from "dotenv";
 import connectDB from "./config/db.js";
 import Document from "./models/Document.js";
 
+
 dotenv.config();
 
 const app = express();
@@ -73,6 +74,8 @@ app.put("/api/documents/:id", async (req, res) => {
         res.status(400).json({ message: error.message });
     }
 });
+
+
 
 const PORT = process.env.PORT || 5000;
 
