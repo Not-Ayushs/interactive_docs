@@ -3,27 +3,46 @@ import { Link } from 'react-router-dom';
 import CapsuleButton from './CapsuleButton';
 
 export default function Navbar() {
-    return (
-        <div className="nav flex justify-between items-center">
-            <Link to="/" className="logo text-white text-2xl font-extrabold mr-20 hover:opacity-90">
-                iDOCS<span className="text-emerald-400">.</span>
-            </Link>
-            
-            <div className="pages flex text-white text-base font-medium gap-8">
-                <a href="#templates" className="hover:text-emerald-400 transition-colors">Templates</a>
-                <a href="#features" className="hover:text-emerald-400 transition-colors">Features</a>
-                <a href="#pricing" className="hover:text-emerald-400 transition-colors">Pricing</a>
-                <a href="#about" className="hover:text-emerald-400 transition-colors">About</a>
-            </div>
+    const scrollToSection = (e, id) => {
+        e.preventDefault();
+        const element = document.getElementById(id);
+        if (element) {
+            element.scrollIntoView({ behavior: 'smooth' });
+        }
+    };
 
-            <div className="sign flex items-center gap-3">
+    return (
+        <header className="fixed top-0 left-0 right-0 z-50 bg-[#0A0E15]/90 backdrop-blur-md border-b border-zinc-800/60 px-10 py-4 flex items-center justify-between">
+            {/* Logo */}
+            <Link to="/" className="text-white text-2xl font-extrabold tracking-tight hover:opacity-90 transition-opacity">
+                iDOCS<span className="text-white">.</span>
+            </Link>
+
+            {/* Navigation Links */}
+            <nav className="flex items-center gap-10 text-white font-semibold text-sm tracking-wide">
+                <a href="#home" onClick={(e) => scrollToSection(e, 'home')} className="hover:text-zinc-300 transition-colors">
+                    Home
+                </a>
+                <a href="#features" onClick={(e) => scrollToSection(e, 'features')} className="hover:text-zinc-300 transition-colors">
+                    Features
+                </a>
+                <a href="#about" onClick={(e) => scrollToSection(e, 'about')} className="hover:text-zinc-300 transition-colors">
+                    About
+                </a>
+                <a href="#pricing" onClick={(e) => scrollToSection(e, 'pricing')} className="hover:text-zinc-300 transition-colors">
+                    Price
+                </a>
+            </nav>
+
+            {/* Action Buttons */}
+            <div className="flex items-center gap-4">
                 <Link to="/app/dashboard">
-                    <CapsuleButton label="Login" type="active" />
+                    <CapsuleButton label="Sign In" type="outline" className="px-6 py-2 text-sm font-semibold" />
                 </Link>
                 <Link to="/app/dashboard">
-                    <CapsuleButton label="Open App" type="outline" />
+                    <CapsuleButton label="Sign Up" type="active" className="px-6 py-2 text-sm font-semibold" />
                 </Link>
             </div>
-        </div>
+        </header>
     );
 }

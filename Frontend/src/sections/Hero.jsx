@@ -1,31 +1,52 @@
 import React from 'react';
 import { Link } from 'react-router-dom';
 import CapsuleButton from '../components/CapsuleButton.jsx';
+import Animation from '../components/Animation.jsx';
 
 export default function Hero() {
     return (
-        <div className="hero flex flex-col justify-center items-center text-center">
-            <h1 className="text-[5.5vw] leading-[1.1] font-extrabold text-[#b36315ff] text-center">
-                Turn your knowledge <br /> into an interactive <br /> workspace.
-            </h1>
-            
-            <h3 className="mt-8 text-slate-400 text-2xl font-medium">
-                Documentation, notes, and collaboration — all in one place.
-            </h3>
-            
-            <p className="mt-5 text-zinc-300 max-w-2xl text-base leading-relaxed">
-                Create, organize, edit, and share documentation and quick notes in one collaborative workspace 
-                designed to make knowledge easier to manage and work with.
-            </p>
+        <section id="home" className="pt-32 pb-20 px-10 max-w-7xl mx-auto min-h-[85vh] flex items-center">
+            <div className="grid grid-cols-1 lg:grid-cols-12 gap-12 items-center w-full">
+                
+                {/* Left Column: Text Content & CTAs */}
+                <div className="lg:col-span-7 flex flex-col items-start text-left">
+                    <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-zinc-800/80 border border-zinc-700/60 text-amber-300 text-xs font-semibold uppercase tracking-wider mb-6">
+                        <span>✨ Interactive Knowledge Base</span>
+                    </div>
 
-            <div className="hero-btns flex justify-center items-center gap-4 mt-10">
-                <Link to="/app/dashboard">
-                    <CapsuleButton label="Get Started" type="active" />
-                </Link>
-                <Link to="/app/dashboard">
-                    <CapsuleButton label="View Demo" type="outline" />
-                </Link>
+                    <h1 className="text-4xl sm:text-5xl lg:text-6xl font-extrabold text-white leading-[1.15] tracking-tight">
+                        Turn your knowledge <br />
+                        <span className="bg-gradient-to-r from-amber-200 via-amber-400 to-amber-500 bg-clip-text text-transparent">
+                            into an interactive
+                        </span> <br />
+                        workspace.
+                    </h1>
+                    
+                    <h3 className="mt-6 text-zinc-300 text-xl sm:text-2xl font-medium">
+                        Documentation, notes, and collaboration — all in one place.
+                    </h3>
+                    
+                    <p className="mt-4 text-zinc-400 max-w-xl text-base leading-relaxed">
+                        Create, organize, edit, and share documentation and quick notes in one collaborative workspace 
+                        designed to make knowledge easier to manage and work with.
+                    </p>
+
+                    <div className="flex items-center gap-4 mt-8">
+                        <Link to="/app/dashboard">
+                            <CapsuleButton label="Get Started" type="active" className="px-7 py-3 text-base font-bold shadow-lg shadow-white/10" />
+                        </Link>
+                        <Link to="/app/dashboard">
+                            <CapsuleButton label="View Demo" type="outline" className="px-7 py-3 text-base font-bold" />
+                        </Link>
+                    </div>
+                </div>
+
+                {/* Right Column: Animation Card Stack Side Component */}
+                <div className="lg:col-span-5 flex justify-center lg:justify-end items-center">
+                    <Animation />
+                </div>
+
             </div>
-        </div>
+        </section>
     );
 }

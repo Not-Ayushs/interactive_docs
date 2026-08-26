@@ -1,19 +1,24 @@
-import Hero from '../../sections/Hero.jsx'
-import Navbar from '../../components/Navbar.jsx'
-import Showcase from '../../sections/Showcase.jsx'
+import React from 'react';
+import Navbar from '../../components/Navbar.jsx';
+import Hero from '../../sections/Hero.jsx';
+import Showcase from '../../sections/Showcase.jsx';
+import About from '../../sections/About.jsx';
+import Pricing from '../../sections/Pricing.jsx';
 
 export default function Landing() {
     return (
-        <>
-            <div className="fixed top-0 left-0 right-0 z-10 px-10 py-6">
-                <Navbar />
-            </div>
-            <div className="p-32">
+        <div className="relative w-full h-screen overflow-y-auto bg-[#0A0E15] text-white scroll-smooth">
+            <Navbar />
+            <main>
                 <Hero />
-            </div>
-            <div>
                 <Showcase />
-            </div>
-        </>
-    )
+                <About />
+                <Pricing />
+            </main>
+
+            <footer className="py-12 border-t border-zinc-800/80 text-center text-zinc-500 text-xs font-medium">
+                <p>© {new Date().getFullYear()} iDOCS. All rights reserved. Interactive Knowledge Base & Documentation.</p>
+            </footer>
+        </div>
+    );
 }
