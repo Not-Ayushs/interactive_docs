@@ -170,10 +170,10 @@ export default function Collections() {
             <Background />
 
             {/* Main Collections Content Container */}
-            <div className="fixed inset-0 z-20 pt-24 px-12 pb-12 overflow-y-auto flex flex-col items-center">
-                <div className="w-full max-w-6xl flex items-center justify-between mb-10">
+            <div className="fixed inset-0 z-20 pt-20 sm:pt-24 px-6 sm:px-12 pb-20 sm:pb-12 overflow-y-auto flex flex-col items-center">
+                <div className="w-full max-w-6xl flex flex-col sm:flex-row sm:items-center justify-between mb-8 sm:mb-10 gap-6">
                     <div>
-                        <h1 className="text-3xl font-bold text-white tracking-tight flex items-center gap-3">
+                        <h1 className="text-2xl sm:text-3xl font-bold text-white tracking-tight flex items-center gap-3">
                             <FiFolder className="text-white" /> Collections
                         </h1>
                         <p className="text-zinc-400 text-sm mt-1">

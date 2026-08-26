@@ -25,7 +25,7 @@ export default function DashboardCard({ doc }) {
     return (
         <div
             onClick={handleOpenDoc}
-            className="group relative w-48 h-60 rounded-[28px] overflow-hidden flex flex-col justify-between cursor-pointer select-none transition-all duration-300 hover:-translate-y-1 hover:shadow-2xl hover:shadow-white/5 border border-zinc-800/80 hover:border-zinc-700/80 shrink-0"
+            className="group relative w-full sm:w-48 h-60 rounded-[28px] overflow-hidden flex flex-col justify-between cursor-pointer select-none transition-all duration-300 hover:-translate-y-1 hover:shadow-2xl hover:shadow-white/5 border border-zinc-800/80 hover:border-zinc-700/80 shrink-0"
         >
             {/* Top Dark Body Container */}
             <div className="bg-[#1c1c24] group-hover:bg-[#22222c] p-5 flex-1 flex flex-col transition-colors duration-300">

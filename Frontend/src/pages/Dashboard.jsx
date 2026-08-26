@@ -130,16 +130,16 @@ export default function Dashboard() {
             <Background />
 
             {/* Scrollable Dashboard View */}
-            <div className="fixed inset-0 z-20 pt-24 px-10 pb-16 overflow-y-auto flex flex-col items-center">
+            <div className="fixed inset-0 z-20 pt-20 sm:pt-24 px-6 sm:px-10 pb-20 sm:pb-16 overflow-y-auto flex flex-col items-center">
                 <div className="w-full max-w-6xl">
                     
                     {/* Top Header Row: DOCS. title + Search bar */}
-                    <div className="flex items-center justify-between mb-8">
-                        <h1 className="text-3xl font-extrabold text-white tracking-tight">
+                    <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-6 sm:mb-8">
+                        <h1 className="text-2xl sm:text-3xl font-extrabold text-white tracking-tight">
                             Recent Docs
                         </h1>
 
-                        <div className="relative w-72">
+                        <div className="relative w-full sm:w-72">
                             <FiSearch className="absolute left-3.5 top-1/2 -translate-y-1/2 text-zinc-400 text-base" />
                             <input
                                 type="text"
@@ -152,7 +152,7 @@ export default function Dashboard() {
                     </div>
 
                     {/* Recent Document Cards Grid */}
-                    <div className="flex flex-wrap gap-6 mb-12">
+                    <div className="grid grid-cols-2 sm:flex sm:flex-wrap justify-center sm:justify-start gap-4 sm:gap-6 mb-10 sm:mb-12">
                         {filteredDocs.map((doc, idx) => (
                             <DashboardCard
                                 key={doc._id || idx}
@@ -194,7 +194,7 @@ export default function Dashboard() {
             </div>
 
             {/* Floating Add Document (+) Button */}
-            <div className="text-black text-[4.3vh] rounded-full bg-white fixed bottom-10 right-10 w-fit h-fit z-40 flex justify-center items-center hover:scale-110 transition-transform duration-200 shadow-2xl">
+            <div className="text-black text-[4.3vh] rounded-full bg-white fixed bottom-6 right-6 sm:bottom-10 sm:right-10 w-fit h-fit z-40 flex justify-center items-center hover:scale-110 transition-transform duration-200 shadow-2xl">
                 <AddDocButton onClick={() => setShowAddModal(true)} />
             </div>
 

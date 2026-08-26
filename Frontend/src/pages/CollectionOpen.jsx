@@ -17,7 +17,7 @@ export default function CollectionOpen() {
             <Background />
 
             {/* Collection Header Bar */}
-            <div className="fixed top-20 left-0 w-full z-30 px-12 py-3 flex items-center justify-between bg-zinc-900/60 backdrop-blur-md border-b border-zinc-800/60 shadow-md">
+            <div className="fixed top-16 sm:top-20 left-0 w-full z-30 px-4 sm:px-12 py-3 flex items-center justify-between bg-zinc-900/60 backdrop-blur-md border-b border-zinc-800/60 shadow-md">
                 <div className="flex items-center gap-4">
                     <CapsuleButton
                         type="outline"
@@ -25,14 +25,14 @@ export default function CollectionOpen() {
                         className="py-1.5 px-4 text-xs"
                     >
                         <FiArrowLeft className="text-sm" />
-                        <span>Back to Collections</span>
+                        <span className="hidden sm:inline">Back</span>
                     </CapsuleButton>
 
                     <div className="h-5 w-[1px] bg-zinc-700" />
 
                     <div className="flex items-center gap-2">
-                        <FiFolder className="text-white text-lg" />
-                        <h1 className="text-white font-bold text-base tracking-wide">
+                        <FiFolder className="text-white text-lg shrink-0" />
+                        <h1 className="text-white font-bold text-sm sm:text-base tracking-wide truncate max-w-[150px] sm:max-w-xs">
                             {decodedName}
                         </h1>
                     </div>
