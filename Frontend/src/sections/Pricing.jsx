@@ -6,7 +6,7 @@ import { FiCheck } from 'react-icons/fi';
 const PRICING_TIERS = [
     {
         name: 'Starter',
-        price: '$0',
+        price: 'INR 0',
         period: 'forever free',
         description: 'Perfect for individuals organizing personal notes and documentation.',
         features: [
@@ -22,7 +22,7 @@ const PRICING_TIERS = [
     },
     {
         name: 'Pro',
-        price: '$12',
+        price: 'INR 19',
         period: 'per month',
         description: 'Ideal for small teams and professionals needing advanced collaboration.',
         features: [
@@ -40,7 +40,7 @@ const PRICING_TIERS = [
     },
     {
         name: 'Enterprise',
-        price: '$29',
+        price: ' INR 59',
         period: 'per month',
         description: 'For growing organizations requiring dedicated SLA and security controls.',
         features: [
