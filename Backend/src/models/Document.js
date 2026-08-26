@@ -16,6 +16,11 @@ const documentSchema = new mongoose.Schema(
       default: "",
     },
 
+    collectionName: {
+      type: String,
+      default: "General",
+    },
+
     tag: {
 
       tagTitle: {

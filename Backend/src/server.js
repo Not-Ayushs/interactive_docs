@@ -4,7 +4,6 @@ import dotenv from "dotenv";
 import connectDB from "./config/db.js";
 import Document from "./models/Document.js";
 
-
 dotenv.config();
 
 const app = express();
@@ -24,21 +23,40 @@ app.get("/dashboard", (req, res) => {
   res.redirect("http://localhost:5173");
 });
 
-// GET all documents
+// GET documents (supports optional ?collectionName= query param)
 app.get("/api/documents", async (req, res) => {
     try {
-        let documents = await Document.find({});
-        if (documents.length === 0) {
-            // Auto-seed database if empty
+        const { collectionName } = req.query;
+        let query = {};
+        if (collectionName) {
+            query.collectionName = collectionName;
+        }
+
+        let documents = await Document.find(query);
+        
+        // Auto-seed database if completely empty
+        if ((await Document.countDocuments({})) === 0) {
             const seedData = [
-                { desc: "This is the doc content you are seeing from MongoDB Atlas!", filesize: ".9mb", tag: { tagTitle: "MBBS", tagColor: "green" }},
-                { desc: "This is the second doc content from MongoDB Atlas", filesize: "1.2mb", tag: { tagTitle: "Engineering", tagColor: "blue" }},
-                { desc: "Another document loaded dynamically from the cloud", filesize: "0.5mb", tag: { tagTitle: "Download Now", tagColor: "sky" }}
+                { desc: "Medical Research Notes & Patient Case Studies", filesize: ".9mb", collectionName: "Medical Research", tag: { tagTitle: "MBBS", tagColor: "green" }},
+                { desc: "Frontend Architecture & API Documentation", filesize: "1.2mb", collectionName: "Engineering", tag: { tagTitle: "Engineering", tagColor: "blue" }},
+                { desc: "General Project Notes and Ideas", filesize: "0.5mb", collectionName: "General", tag: { tagTitle: "Notes", tagColor: "sky" }}
             ];
             await Document.insertMany(seedData);
-            documents = await Document.find({});
+            documents = await Document.find(query);
         }
+
         res.json(documents);
+    } catch (error) {
+        res.status(500).json({ message: error.message });
+    }
+});
+
+// GET a single document by ID
+app.get("/api/documents/:id", async (req, res) => {
+    try {
+        const doc = await Document.findById(req.params.id);
+        if (!doc) return res.status(404).json({ message: "Document not found" });
+        res.json(doc);
     } catch (error) {
         res.status(500).json({ message: error.message });
     }
@@ -47,11 +65,12 @@ app.get("/api/documents", async (req, res) => {
 // POST a new document
 app.post("/api/documents", async (req, res) => {
     try {
-        const { desc, filesize, tag } = req.body;
+        const { desc, filesize, tag, collectionName } = req.body;
         const newDoc = new Document({
             desc,
             filesize,
             tag,
+            collectionName: collectionName || "General"
         });
         const savedDoc = await newDoc.save();
         res.status(201).json(savedDoc);
@@ -74,8 +93,6 @@ app.put("/api/documents/:id", async (req, res) => {
         res.status(400).json({ message: error.message });
     }
 });
-
-
 
 const PORT = process.env.PORT || 5000;
 

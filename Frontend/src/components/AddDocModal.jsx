@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { IoIosCloseCircle } from "react-icons/io";
 
-export default function AddDocModal({ showModal, setShowModal, onAdd }) {
+export default function AddDocModal({ showModal, setShowModal, onAdd, collectionName = "" }) {
     const [desc, setDesc] = useState("");
     const [tagTitle, setTagTitle] = useState("");
     const [tagColor, setTagColor] = useState("green");
@@ -20,6 +20,7 @@ export default function AddDocModal({ showModal, setShowModal, onAdd }) {
         const newDoc = {
             desc,
             filesize: ".9mb", // static for mockup
+            collectionName: collectionName || "General",
             tag: {
                 isOpen: true,
                 tagTitle: tagTitle || "Untitled Tag",
@@ -57,14 +58,19 @@ export default function AddDocModal({ showModal, setShowModal, onAdd }) {
                             <IoIosCloseCircle size={24} />
                         </button>
 
-                        <h2 className="text-xl font-bold mb-6 text-[#ece9e9ef]">Add New Document</h2>
+                        <h2 className="text-xl font-bold mb-1 text-[#ece9e9ef]">Add New Document</h2>
+                        {collectionName && (
+                            <p className="text-xs text-amber-300 font-medium mb-5">
+                                Saving into collection: <span className="font-bold">{collectionName}</span>
+                            </p>
+                        )}
 
                         <div className="flex flex-col gap-4">
                             {/* Description */}
                             <div className="flex flex-col gap-1">
                                 <label className="text-xs text-zinc-400 font-semibold uppercase tracking-wider">Description</label>
                                 <textarea 
-                                    className="bg-zinc-950 border border-zinc-800 rounded-xl p-3 focus:outline-none focus:border-green-100 resize-none h-24"
+                                    className="bg-zinc-950 border border-zinc-800 rounded-xl p-3 focus:outline-none focus:border-white resize-none h-24 text-sm"
                                     placeholder="Enter document details..."
                                     value={desc}
                                     onChange={(e) => setDesc(e.target.value)}
@@ -76,7 +82,7 @@ export default function AddDocModal({ showModal, setShowModal, onAdd }) {
                                 <label className="text-xs text-zinc-400 font-semibold uppercase tracking-wider">Tag Title</label>
                                 <input 
                                     type="text"
-                                    className="bg-zinc-950 border border-zinc-800 rounded-xl p-3 focus:outline-none focus:border-green-100"
+                                    className="bg-zinc-950 border border-zinc-800 rounded-xl p-3 focus:outline-none focus:border-white text-sm"
                                     placeholder="e.g. MBBS, Urgent, Research"
                                     value={tagTitle}
                                     onChange={(e) => setTagTitle(e.target.value)}
@@ -87,7 +93,7 @@ export default function AddDocModal({ showModal, setShowModal, onAdd }) {
                             <div className="flex flex-col gap-1">
                                 <label className="text-xs text-zinc-400 font-semibold uppercase tracking-wider">Tag Color</label>
                                 <select 
-                                    className="bg-zinc-950 border border-zinc-800 rounded-xl p-3 focus:outline-none focus:border-green-100 cursor-pointer"
+                                    className="bg-zinc-950 border border-zinc-800 rounded-xl p-3 focus:outline-none focus:border-white cursor-pointer text-sm"
                                     value={tagColor}
                                     onChange={(e) => setTagColor(e.target.value)}
                                 >
@@ -101,7 +107,7 @@ export default function AddDocModal({ showModal, setShowModal, onAdd }) {
                             {/* Save Button */}
                             <button 
                                 onClick={handleSave}
-                                className="mt-4 rounded-xl bg-[#ece9e9ef] hover:bg-[#bdbdbd] text-zinc-950 cursor-pointer py-3 font-bold transition-all shadow-md shadow-green-500/20 active:scale-95"
+                                className="mt-4 rounded-xl bg-white hover:bg-zinc-200 text-zinc-950 cursor-pointer py-3 font-bold transition-all shadow-md active:scale-95"
                             >
                                 Save Document
                             </button>
