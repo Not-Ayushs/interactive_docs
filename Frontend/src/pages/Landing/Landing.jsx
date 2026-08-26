@@ -1,5 +1,6 @@
 import Hero from '../../sections/Hero.jsx'
 import Navbar from '../../components/Navbar.jsx'
+import Showcase from '../../sections/Showcase.jsx'
 
 export default function Landing() {
     return (
@@ -9,6 +10,9 @@ export default function Landing() {
             </div>
             <div className="p-32">
                 <Hero />
+            </div>
+            <div>
+                <Showcase />
             </div>
         </>
     )

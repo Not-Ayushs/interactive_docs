@@ -36,6 +36,8 @@ export default function Foreground() {
                     <Card key={item._id || index} data={item} reference={ref} onUpdate={handleUpdateDoc}/>
                 ))}
             </motion.div>
+
+            
             
             <div className='text-white text-[4.3vh] rounded-full bg-green-300 absolute bottom-10 right-5 w-fit h-fit z-30 flex justify-center items-center hover:scale-115 transition-transform duration-200'>
                 <AddDocButton onClick={() => setShowAddModal(true)} />

@@ -1,11 +1,13 @@
 import Background from '../components/Background.jsx'
 import Foreground from '../components/Foreground.jsx'
+import AppNavbar from '../components/AppNavbar.jsx'
 
 export default function Dashboard(){
     return (
-        <>
-        <Background />
-        <Foreground />
-      </>
+        <div className="relative w-full h-screen overflow-hidden">
+            <AppNavbar />
+            <Background />
+            <Foreground />
+        </div>
     )
-}
+}
