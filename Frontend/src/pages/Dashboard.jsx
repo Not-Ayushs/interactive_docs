@@ -9,6 +9,7 @@ import {
     FiSearch, FiFileText, FiCode, FiDatabase, 
     FiLayers, FiZap, FiFolder 
 } from 'react-icons/fi';
+import { getApiBaseUrl } from '../utils/api.js';
 
 const SAMPLE_DOCS = [
     {
@@ -79,7 +80,7 @@ export default function Dashboard() {
     const [showAddModal, setShowAddModal] = useState(false);
 
     useEffect(() => {
-        const apiBaseUrl = import.meta.env.VITE_API_URL || "http://localhost:5000";
+        const apiBaseUrl = getApiBaseUrl();
         fetch(`${apiBaseUrl}/api/documents`)
             .then(res => res.json())
             .then(docs => {

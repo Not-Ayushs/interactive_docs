@@ -59,26 +59,26 @@ const PRICING_TIERS = [
 
 export default function Pricing() {
     return (
-        <section id="pricing" className="py-24 px-10 max-w-7xl mx-auto border-t border-zinc-800/80">
-            <div className="text-center mb-16">
+        <section id="pricing" className="py-16 sm:py-24 px-6 sm:px-10 max-w-7xl mx-auto border-t border-zinc-800/80">
+            <div className="text-center mb-10 sm:mb-16">
                 <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-zinc-800/80 border border-zinc-700/60 text-amber-300 text-xs font-semibold uppercase tracking-wider mb-4">
                     <span>PRICING PLANS</span>
                 </div>
-                <h2 className="text-3xl sm:text-4xl lg:text-5xl font-extrabold text-white tracking-tight">
+                <h2 className="text-2xl sm:text-3xl lg:text-5xl font-extrabold text-white tracking-tight">
                     Simple, transparent pricing for every team
                 </h2>
-                <p className="text-zinc-400 text-base sm:text-lg mt-4 max-w-2xl mx-auto font-normal">
+                <p className="text-zinc-400 text-sm sm:text-base lg:text-lg mt-4 max-w-2xl mx-auto font-normal">
                     Start free with essential documentation tools. Upgrade whenever you are ready to scale.
                 </p>
             </div>
 
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-8 items-stretch">
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-6 sm:gap-8 items-stretch">
                 {PRICING_TIERS.map((tier, idx) => (
                     <div
                         key={idx}
-                        className={`relative rounded-3xl p-8 flex flex-col justify-between transition-all duration-300 ${
+                        className={`relative rounded-3xl p-7 sm:p-8 flex flex-col justify-between transition-all duration-300 ${
                             tier.highlight
-                                ? 'bg-zinc-900 border-2 border-white shadow-2xl scale-105 z-10'
+                                ? 'bg-zinc-900 border-2 border-white shadow-2xl md:scale-105 z-10'
                                 : 'bg-zinc-900/60 border border-zinc-800 hover:border-zinc-700'
                         }`}
                     >

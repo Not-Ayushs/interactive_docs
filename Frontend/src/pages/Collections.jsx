@@ -4,6 +4,7 @@ import AppNavbar from '../components/AppNavbar.jsx';
 import Background from '../components/Background.jsx';
 import CapsuleButton from '../components/CapsuleButton.jsx';
 import { FiPlus, FiFolder, FiX, FiMoreVertical, FiEdit2, FiTrash2 } from 'react-icons/fi';
+import { getApiBaseUrl } from '../utils/api.js';
 
 const INITIAL_COLLECTIONS = [
     { id: '1', title: 'Engineering' },
@@ -49,7 +50,7 @@ export default function Collections() {
 
     // Fetch document counts & dynamically sync collections with MongoDB documents
     useEffect(() => {
-        const apiBaseUrl = import.meta.env.VITE_API_URL || "http://localhost:5000";
+        const apiBaseUrl = getApiBaseUrl();
         fetch(`${apiBaseUrl}/api/documents`)
             .then(res => res.json())
             .then(docs => {

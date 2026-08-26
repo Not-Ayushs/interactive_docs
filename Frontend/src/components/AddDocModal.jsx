@@ -1,5 +1,6 @@
 import { useState } from "react";
 import { IoIosCloseCircle } from "react-icons/io";
+import { getApiBaseUrl } from '../utils/api.js';
 
 export default function AddDocModal({ showModal, setShowModal, onAdd, collectionName = "" }) {
     const [desc, setDesc] = useState("");
@@ -28,7 +29,7 @@ export default function AddDocModal({ showModal, setShowModal, onAdd, collection
             }
         };
 
-        const apiBaseUrl = import.meta.env.VITE_API_URL || "http://localhost:5000";
+        const apiBaseUrl = getApiBaseUrl();
         fetch(`${apiBaseUrl}/api/documents`, {
             method: "POST",
             headers: {

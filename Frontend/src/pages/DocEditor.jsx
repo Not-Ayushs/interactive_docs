@@ -3,6 +3,7 @@ import { useParams, useNavigate, useLocation } from 'react-router-dom';
 import Editor from '../components/Editor.jsx';
 import CapsuleButton from '../components/CapsuleButton.jsx';
 import { FiArrowLeft, FiX, FiCheck, FiFolder } from 'react-icons/fi';
+import { getApiBaseUrl } from '../utils/api.js';
 
 export default function DocEditor() {
     const { docId } = useParams();
@@ -18,7 +19,7 @@ export default function DocEditor() {
     const returnCollection = location.state?.fromCollection || doc?.collectionName;
 
     useEffect(() => {
-        const apiBaseUrl = import.meta.env.VITE_API_URL || "http://localhost:5000";
+        const apiBaseUrl = getApiBaseUrl();
         fetch(`${apiBaseUrl}/api/documents/${docId}`)
             .then(res => {
                 if (!res.ok) throw new Error("Document not found");
@@ -49,7 +50,7 @@ export default function DocEditor() {
         setSaving(true);
         setSavedStatus('Saving changes...');
 
-        const apiBaseUrl = import.meta.env.VITE_API_URL || "http://localhost:5000";
+        const apiBaseUrl = getApiBaseUrl();
         fetch(`${apiBaseUrl}/api/documents/${docId}`, {
             method: 'PUT',
             headers: {

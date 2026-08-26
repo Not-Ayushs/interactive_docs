@@ -26,20 +26,20 @@ const FEATURES = [
 
 export default function About() {
     return (
-        <section id="about" className="py-24 px-10 max-w-7xl mx-auto border-t border-zinc-800/80">
-            <div className="text-center mb-16">
+        <section id="about" className="py-16 sm:py-24 px-6 sm:px-10 max-w-7xl mx-auto border-t border-zinc-800/80">
+            <div className="text-center mb-10 sm:mb-16">
                 <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-zinc-800/80 border border-zinc-700/60 text-amber-300 text-xs font-semibold uppercase tracking-wider mb-4">
                     <span>ABOUT IDOCS</span>
                 </div>
-                <h2 className="text-3xl sm:text-4xl lg:text-5xl font-extrabold text-white tracking-tight">
+                <h2 className="text-2xl sm:text-4xl lg:text-5xl font-extrabold text-white tracking-tight">
                     Designed for effortless knowledge management
                 </h2>
-                <p className="text-zinc-400 text-base sm:text-lg mt-4 max-w-2xl mx-auto font-normal">
+                <p className="text-zinc-400 text-sm sm:text-base lg:text-lg mt-4 max-w-2xl mx-auto font-normal">
                     Everything you need to write, organize, and manage technical documentation in one place.
                 </p>
             </div>
 
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8">
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6 sm:gap-8">
                 {FEATURES.map((item, idx) => (
                     <div
                         key={idx}

@@ -4,13 +4,15 @@ import AddDocButton from './AddDocButton'
 import AddDocModal from './AddDocModal'
 import { motion } from 'framer-motion'
 
+import { getApiBaseUrl } from '../utils/api.js';
+
 export default function Foreground({ className = "", collectionName = "" }) {
     const ref = useRef(null);
     const [data, setData] = useState([]);
     const [showAddModal, setShowAddModal] = useState(false);
 
     useEffect(() => {
-        const apiBaseUrl = import.meta.env.VITE_API_URL || "http://localhost:5000";
+        const apiBaseUrl = getApiBaseUrl();
         const url = collectionName 
             ? `${apiBaseUrl}/api/documents?collectionName=${encodeURIComponent(collectionName)}`
             : `${apiBaseUrl}/api/documents`;
