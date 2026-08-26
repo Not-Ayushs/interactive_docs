@@ -8,7 +8,10 @@ import { FiPlus, FiFolder, FiX, FiMoreVertical, FiEdit2, FiTrash2 } from 'react-
 const INITIAL_COLLECTIONS = [
     { id: '1', title: 'Engineering' },
     { id: '2', title: 'Medical Research' },
-    { id: '3', title: 'Project Notes' }
+    { id: '3', title: 'Project Notes' },
+    { id: '4', title: 'General' },
+    { id: '5', title: 'Design System' },
+    { id: '6', title: 'API Specs & References' }
 ];
 
 export default function Collections() {
@@ -26,7 +29,15 @@ export default function Collections() {
         const saved = localStorage.getItem('DOCS_COLLECTIONS');
         if (saved) {
             try {
-                setCollections(JSON.parse(saved));
+                const parsed = JSON.parse(saved);
+                // Ensure default collections like General are present
+                const combined = [...parsed];
+                INITIAL_COLLECTIONS.forEach(ic => {
+                    if (!combined.some(c => c.title === ic.title)) {
+                        combined.push(ic);
+                    }
+                });
+                setCollections(combined);
             } catch (e) {
                 setCollections(INITIAL_COLLECTIONS);
             }
@@ -36,20 +47,48 @@ export default function Collections() {
         }
     }, []);
 
-    // Fetch document counts from API to check which collections have cards
+    // Fetch document counts & dynamically sync collections with MongoDB documents
     useEffect(() => {
         const apiBaseUrl = import.meta.env.VITE_API_URL || "http://localhost:5000";
         fetch(`${apiBaseUrl}/api/documents`)
             .then(res => res.json())
             .then(docs => {
                 const counts = {};
+                const dynamicCols = [];
+
                 if (Array.isArray(docs)) {
                     docs.forEach(doc => {
-                        const col = doc.collectionName || 'General';
-                        counts[col] = (counts[col] || 0) + 1;
+                        const colName = doc.collectionName || 'General';
+                        counts[colName] = (counts[colName] || 0) + 1;
+
+                        if (!dynamicCols.includes(colName)) {
+                            dynamicCols.push(colName);
+                        }
                     });
                 }
+
                 setDocCounts(counts);
+
+                // Dynamically append any new collectionName found in MongoDB
+                if (dynamicCols.length > 0) {
+                    setCollections(prev => {
+                        const updated = [...prev];
+                        let changed = false;
+                        dynamicCols.forEach(colName => {
+                            if (!updated.some(c => c.title.toLowerCase() === colName.toLowerCase())) {
+                                updated.push({
+                                    id: Date.now().toString() + Math.random().toString(36).substr(2, 4),
+                                    title: colName
+                                });
+                                changed = true;
+                            }
+                        });
+                        if (changed) {
+                            localStorage.setItem('DOCS_COLLECTIONS', JSON.stringify(updated));
+                        }
+                        return updated;
+                    });
+                }
             })
             .catch(err => console.error("Error fetching doc counts:", err));
     }, []);

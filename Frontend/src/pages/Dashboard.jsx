@@ -150,8 +150,8 @@ export default function Dashboard() {
                         </div>
                     </div>
 
-                    {/* 3-Column Document Cards Grid */}
-                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mb-12">
+                    {/* Recent Document Cards Grid */}
+                    <div className="flex flex-wrap gap-6 mb-12">
                         {filteredDocs.map((doc, idx) => (
                             <DashboardCard
                                 key={doc._id || idx}

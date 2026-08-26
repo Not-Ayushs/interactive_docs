@@ -37,9 +37,12 @@ app.get("/api/documents", async (req, res) => {
         // Auto-seed database if completely empty
         if ((await Document.countDocuments({})) === 0) {
             const seedData = [
-                { desc: "Medical Research Notes & Patient Case Studies", filesize: ".9mb", collectionName: "Medical Research", tag: { tagTitle: "MBBS", tagColor: "green" }},
-                { desc: "Frontend Architecture & API Documentation", filesize: "1.2mb", collectionName: "Engineering", tag: { tagTitle: "Engineering", tagColor: "blue" }},
-                { desc: "General Project Notes and Ideas", filesize: "0.5mb", collectionName: "General", tag: { tagTitle: "Notes", tagColor: "sky" }}
+                { desc: "Medical Research Notes & Clinical Case Studies", filesize: ".9mb", collectionName: "Medical Research", tag: { tagTitle: "MBBS", tagColor: "green" }},
+                { desc: "Frontend Architecture & System Guidelines", filesize: "1.2mb", collectionName: "Engineering", tag: { tagTitle: "Engineering", tagColor: "blue" }},
+                { desc: "General Project Notes, Ideas & Daily Standup Log", filesize: "0.5mb", collectionName: "General", tag: { tagTitle: "General Notes", tagColor: "sky" }},
+                { desc: "Design System UI Components, Tokens & Branding Assets", filesize: "1.8mb", collectionName: "Design System", tag: { tagTitle: "Design System", tagColor: "amber" }},
+                { desc: "API Specifications, Endpoints & Authentication Guides", filesize: "1.1mb", collectionName: "API Specs & References", tag: { tagTitle: "API Specs", tagColor: "blue" }},
+                { desc: "Project Notes & Sprint Archives Summary", filesize: "0.7mb", collectionName: "Project Notes", tag: { tagTitle: "Project Notes", tagColor: "green" }}
             ];
             await Document.insertMany(seedData);
             documents = await Document.find(query);

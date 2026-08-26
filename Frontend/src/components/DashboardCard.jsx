@@ -1,16 +1,16 @@
 import React from 'react';
 import { useNavigate } from 'react-router-dom';
-import CapsuleButton from './CapsuleButton';
 
-export default function DashboardCard({ doc, icon: IconComponent }) {
+export default function DashboardCard({ doc }) {
     const navigate = useNavigate();
 
     const getPlainText = (htmlContent) => {
-        if (!htmlContent) return "";
-        return htmlContent.replace(/<[^>]*>/g, ' ');
+        if (!htmlContent) return "This is a sample doc for the design inspiration....";
+        const plainText = htmlContent.replace(/<[^>]*>/g, ' ').trim();
+        return plainText || "This is a sample doc for the design inspiration....";
     };
 
-    const handleConnect = () => {
+    const handleOpenDoc = () => {
         if (doc?._id) {
             navigate(`/app/editor/${doc._id}`, {
                 state: { fromCollection: doc.collectionName }
@@ -18,34 +18,33 @@ export default function DashboardCard({ doc, icon: IconComponent }) {
         }
     };
 
-    return (
-        <div className="group bg-zinc-900/80 hover:bg-zinc-900 border border-zinc-800/90 hover:border-zinc-700/80 rounded-2xl p-6 flex flex-col justify-between transition-all duration-300 shadow-xl hover:shadow-2xl">
-            <div>
-                {/* Top Left Icon Box */}
-                <div className="w-10 h-10 rounded-xl bg-white text-zinc-950 flex items-center justify-center font-bold shadow-md shadow-white/10 mb-4 transition-transform group-hover:scale-105">
-                    {IconComponent ? <IconComponent size={20} /> : <span className="text-sm font-black">D</span>}
-                </div>
+    const titleText = (doc.tag?.tagTitle || doc.title || "DOCUMENT NOTES").toUpperCase();
+    const descText = getPlainText(doc.desc);
+    const collectionBadge = (doc.collectionName || doc.tag?.tagTitle || "General").toUpperCase();
 
-                {/* Card Title */}
-                <h3 className="text-white font-bold text-base tracking-wide mb-2">
-                    {doc.tag?.tagTitle || doc.title || "Document"}
+    return (
+        <div
+            onClick={handleOpenDoc}
+            className="group relative w-48 h-60 rounded-[28px] overflow-hidden flex flex-col justify-between cursor-pointer select-none transition-all duration-300 hover:-translate-y-1 hover:shadow-2xl hover:shadow-white/5 border border-zinc-800/80 hover:border-zinc-700/80 shrink-0"
+        >
+            {/* Top Dark Body Container */}
+            <div className="bg-[#1c1c24] group-hover:bg-[#22222c] p-5 flex-1 flex flex-col transition-colors duration-300">
+                {/* Document Title */}
+                <h3 className="text-white font-medium text-xs tracking-wider uppercase mb-2 line-clamp-2 leading-snug">
+                    {titleText}
                 </h3>
 
-                {/* Card Description */}
-                <p className="text-zinc-400 text-xs leading-relaxed line-clamp-3 mb-6 font-normal">
-                    {getPlainText(doc.desc) || "Centralized documentation, guidelines, and specifications for project releases."}
+                {/* Document Description Snippet */}
+                <p className="text-zinc-300 text-[11px] leading-relaxed font-normal line-clamp-3">
+                    {descText}
                 </p>
             </div>
 
-            {/* Bottom Connect Button */}
-            <div className="flex items-center justify-start pt-2">
-                <CapsuleButton
-                    type="outline"
-                    onClick={handleConnect}
-                    className="py-1 px-4 text-xs font-semibold hover:bg-white hover:text-black border-zinc-700"
-                >
-                    Connect
-                </CapsuleButton>
+            {/* Bottom Light Contrast Rounded Footer displaying Collection Name */}
+            <div className="bg-[#e2e2e6] text-zinc-900 group-hover:bg-white px-4 py-2.5 flex items-center justify-center font-bold text-[10px] tracking-wider uppercase rounded-b-[28px] transition-colors duration-300 border-t border-zinc-800/20 shadow-inner">
+                <span className="truncate max-w-full" title={`Collection: ${doc.collectionName || 'General'}`}>
+                    {collectionBadge}
+                </span>
             </div>
         </div>
     );
