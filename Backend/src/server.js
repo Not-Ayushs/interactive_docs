@@ -14,7 +14,7 @@ const app = express();
 connectDB();
 
 app.use(cors({
-  origin: "http://localhost:5173",
+  origin: ["http://localhost:5173", "https://interactive-docs-ayudev.vercel.app", "https://interactive-docs-io8v.vercel.app"],
   credentials: true,
 }));
 app.use(express.json());
