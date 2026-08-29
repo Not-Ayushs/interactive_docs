@@ -8,6 +8,7 @@ import DocEditor from './pages/DocEditor.jsx'
 import Landing from './pages/Landing/Landing.jsx'
 import Login from './pages/Login.jsx'
 import Signup from './pages/Signup.jsx'
+import Prank from './pages/Prank.jsx'
 
 function App() {
   return (
@@ -21,6 +22,13 @@ function App() {
           <Route path="/app/collections" element={<Collections />} />
           <Route path="/app/collections/:collectionName" element={<CollectionOpen />} />
           <Route path="/app/editor/:docId" element={<DocEditor />} />
+          
+          {/* Prank Routes for Snooping Friends */}
+          <Route path="/docs" element={<Prank />} />
+          <Route path="/admin" element={<Prank />} />
+          <Route path="/wp-admin" element={<Prank />} />
+          <Route path="/hidden" element={<Prank />} />
+          
         </Routes>
       </BrowserRouter>
     </div>
