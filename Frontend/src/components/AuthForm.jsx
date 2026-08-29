@@ -3,9 +3,9 @@ import { Link } from 'react-router-dom';
 
 const AuthForm = ({ title, subtitle, type, onSubmit, onChange, error, isLoading }) => {
   return (
-    <div className="w-full max-w-md mx-auto p-8 rounded-xl bg-[#0F0F11] border border-zinc-800 text-white shadow-2xl">
-      <div className="flex justify-between items-baseline mb-2">
-        <h1 className="text-2xl font-semibold tracking-tight">{title}</h1>
+    <div className="w-full max-w-md mx-auto p-6 sm:p-8 rounded-xl bg-[#0F0F11] border border-zinc-800 text-white shadow-2xl">
+      <div className="flex justify-between items-baseline mb-2 gap-4">
+        <h1 className="text-xl sm:text-2xl font-semibold tracking-tight">{title}</h1>
         {type === 'login' ? (
           <Link to="/signup" className="text-sm font-medium hover:underline underline-offset-4 text-zinc-300">Sign Up</Link>
         ) : (
