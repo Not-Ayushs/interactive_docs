@@ -26,6 +26,7 @@ function App() {
           {/* Prank Routes for Snooping Friends */}
           <Route path="/docs" element={<Prank />} />
           <Route path="/admin" element={<Prank />} />
+          <Route path="/app/admin" element={<Prank />} />
           <Route path="/wp-admin" element={<Prank />} />
           <Route path="/hidden" element={<Prank />} />
           

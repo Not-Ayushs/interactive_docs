@@ -14,7 +14,7 @@ const Prank = () => {
                 </div>
                 
                 <h1 className="text-4xl md:text-6xl font-extrabold text-white mb-6 tracking-tight">
-                    Nice Try! 🕵️‍♂️
+                    Nice Try!
                 </h1>
                 
                 <p className="text-zinc-400 text-lg mb-8 font-mono">
@@ -35,7 +35,7 @@ const Prank = () => {
                 </div>
 
                 <Link to="/">
-                    <CapsuleButton label="Retreat to Safety" type="outline" />
+                    <CapsuleButton label="Kindly Get Lost!" type="outline" />
                 </Link>
             </div>
         </div>

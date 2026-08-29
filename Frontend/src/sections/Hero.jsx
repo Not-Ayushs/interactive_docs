@@ -27,12 +27,12 @@ export default function Hero() {
                     </h3>
                     
                     <p className="mt-3 sm:mt-4 text-zinc-400 max-w-xl text-sm sm:text-base leading-relaxed">
-                        Create, organize, edit, and share documentation and quick notes in one collaborative workspace 
-                        designed to make knowledge easier to manage and work with.
+                        Create, organize, and edit documentation in a collaborative workspace. 
+                        Instantly export your collections into AI-ready Markdown files for seamless integration with ChatGPT or Claude.
                     </p>
 
                     <div className="flex flex-col sm:flex-row items-start sm:items-center gap-3 sm:gap-4 mt-6 sm:mt-8 w-full">
-                        <Link to="/app/dashboard" className="w-full sm:w-auto">
+                        <Link to="/login" className="w-full sm:w-auto">
                             <CapsuleButton label="Get Started" type="active" className="w-full sm:w-auto px-7 py-3 text-base font-bold shadow-lg shadow-white/10" />
                         </Link>
                         <Link to="/app/dashboard" className="w-full sm:w-auto">
