@@ -9,6 +9,7 @@ import Landing from './pages/Landing/Landing.jsx'
 import Login from './pages/Login.jsx'
 import Signup from './pages/Signup.jsx'
 import Prank from './pages/Prank.jsx'
+import FeatureShow from './testComponents/featureShow.jsx'
 
 function App() {
   return (

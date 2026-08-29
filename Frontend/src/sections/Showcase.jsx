@@ -68,21 +68,34 @@ export default function Showcase() {
                     </div>
                 </div>
 
-                {/* Feature 3 — Export for AI: Standard Card */}
-                <div className="bg-zinc-900/60 border border-zinc-800 rounded-3xl p-6 sm:p-8 flex flex-col justify-between hover:border-zinc-700 transition-all duration-300">
-                    <div>
-                        <div className="w-12 h-12 rounded-2xl bg-white text-zinc-950 flex items-center justify-center font-bold mb-6 shadow-md">
-                            <FiDownload size={22} />
-                        </div>
-                        <h3 className="text-white font-bold text-lg sm:text-xl mb-3">AI-Ready Markdown Exports</h3>
-                        <p className="text-zinc-400 text-sm leading-relaxed mb-6 font-normal">
-                            Convert an entire collection of notes into a single, perfectly formatted Markdown (.md) file instantly. Ready to be fed into ChatGPT, Claude, or any AI tool.
-                        </p>
+                {/* Feature 3 — Export for AI: Video Card */}
+                <div className="bg-zinc-900/60 border border-zinc-800 rounded-3xl overflow-hidden flex flex-col hover:border-zinc-700 transition-all duration-300 group">
+                    {/* Video */}
+                    <div className="relative w-full overflow-hidden bg-black rounded-t-3xl">
+                        <video
+                            src="/webauitemd.mp4"
+                            autoPlay
+                            loop
+                            muted
+                            playsInline
+                            className="w-full h-48 sm:h-56 object-cover block group-hover:scale-[1.02] transition-transform duration-500"
+                        />
+                        <div className="absolute bottom-0 left-0 right-0 h-8 bg-gradient-to-t from-zinc-900/80 to-transparent pointer-events-none" />
                     </div>
-                    <div className="pt-4 border-t border-zinc-800/80">
-                        <span className="text-xs text-amber-300 font-semibold flex items-center gap-2">
-                            <FiCheckCircle size={14} /> Bridge the gap to AI
-                        </span>
+
+                    {/* Text content */}
+                    <div className="p-6 flex flex-col flex-1 justify-between">
+                        <div>
+                            <h3 className="text-white font-bold text-lg sm:text-xl mb-2">AI-Ready Markdown Exports</h3>
+                            <p className="text-zinc-400 text-sm leading-relaxed font-normal mb-4">
+                                Convert an entire collection of notes into a single, perfectly formatted Markdown (.md) file instantly. Ready to be fed into ChatGPT, Claude, or any AI tool.
+                            </p>
+                        </div>
+                        <div className="pt-4 border-t border-zinc-800/80">
+                            <span className="text-xs text-amber-300 font-semibold flex items-center gap-2">
+                                <FiCheckCircle size={14} /> Bridge the gap to AI
+                            </span>
+                        </div>
                     </div>
                 </div>
 
