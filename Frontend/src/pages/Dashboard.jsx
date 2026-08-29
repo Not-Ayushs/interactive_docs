@@ -81,7 +81,12 @@ export default function Dashboard() {
 
     useEffect(() => {
         const apiBaseUrl = getApiBaseUrl();
-        fetch(`${apiBaseUrl}/api/documents`)
+        const token = localStorage.getItem('token');
+        fetch(`${apiBaseUrl}/api/documents`, {
+            headers: {
+                "Authorization": `Bearer ${token}`
+            }
+        })
             .then(res => res.json())
             .then(docs => {
                 if (Array.isArray(docs) && docs.length > 0) {
@@ -169,7 +174,11 @@ export default function Dashboard() {
                         </h2>
 
                         <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-7 gap-4">
-                            {shortcuts.map((sc, index) => (
+                            {shortcuts.map((sc, index) => {
+                                const hasDocs = documents.some(doc => doc.collectionName === sc.title);
+                                const folderSrc = hasDocs ? "/FilledFolder.png" : "/NotFiledFolder.png";
+                                
+                                return (
                                 <div
                                     key={index}
                                     onClick={() => navigate(`/app/collections/${encodeURIComponent(sc.title)}`)}
@@ -177,7 +186,7 @@ export default function Dashboard() {
                                 >
                                     <div className="w-24 h-20 relative flex items-center justify-center">
                                         <img
-                                            src="/NotFiledFolder.png"
+                                            src={folderSrc}
                                             alt="Folder"
                                             className="w-full h-full object-contain filter group-hover:brightness-125 transition-all"
                                         />
@@ -186,7 +195,7 @@ export default function Dashboard() {
                                         {sc.title}
                                     </span>
                                 </div>
-                            ))}
+                            )})}
                         </div>
                     </div>
 

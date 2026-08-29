@@ -33,7 +33,8 @@ export default function AddDocModal({ showModal, setShowModal, onAdd, collection
         fetch(`${apiBaseUrl}/api/documents`, {
             method: "POST",
             headers: {
-                "Content-Type": "application/json"
+                "Content-Type": "application/json",
+                "Authorization": `Bearer ${localStorage.getItem('token')}`
             },
             body: JSON.stringify(newDoc)
         })

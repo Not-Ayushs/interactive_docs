@@ -3,7 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import AppNavbar from '../components/AppNavbar.jsx';
 import Background from '../components/Background.jsx';
 import CapsuleButton from '../components/CapsuleButton.jsx';
-import { FiPlus, FiFolder, FiX, FiMoreVertical, FiEdit2, FiTrash2 } from 'react-icons/fi';
+import { FiPlus, FiFolder, FiX, FiMoreVertical, FiEdit2, FiTrash2, FiDownload } from 'react-icons/fi';
 import { getApiBaseUrl } from '../utils/api.js';
 
 const INITIAL_COLLECTIONS = [
@@ -51,7 +51,12 @@ export default function Collections() {
     // Fetch document counts & dynamically sync collections with MongoDB documents
     useEffect(() => {
         const apiBaseUrl = getApiBaseUrl();
-        fetch(`${apiBaseUrl}/api/documents`)
+        const token = localStorage.getItem('token');
+        fetch(`${apiBaseUrl}/api/documents`, {
+            headers: {
+                "Authorization": `Bearer ${token}`
+            }
+        })
             .then(res => res.json())
             .then(docs => {
                 const counts = {};
@@ -159,6 +164,32 @@ export default function Collections() {
         setActiveMenuId(null);
     };
 
+    const handleExportCollection = async (title) => {
+        try {
+            const apiBaseUrl = getApiBaseUrl();
+            const token = localStorage.getItem('token');
+            const res = await fetch(`${apiBaseUrl}/api/collections/${encodeURIComponent(title)}/export`, {
+                headers: { "Authorization": `Bearer ${token}` }
+            });
+            if (!res.ok) throw new Error("Failed to export collection");
+            const data = await res.json();
+            
+            const blob = new Blob([data.markdown], { type: 'text/markdown' });
+            const url = window.URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = `${title.replace(/\s+/g, '_')}_Collection.md`;
+            document.body.appendChild(a);
+            a.click();
+            document.body.removeChild(a);
+            window.URL.revokeObjectURL(url);
+        } catch (error) {
+            console.error(error);
+            alert("Error exporting collection.");
+        }
+        setActiveMenuId(null);
+    };
+
     const toggleMenu = (e, id) => {
         e.stopPropagation();
         setActiveMenuId(prev => prev === id ? null : id);
@@ -260,6 +291,18 @@ export default function Collections() {
                                                 >
                                                     <FiTrash2 className="text-sm" />
                                                     <span>Delete</span>
+                                                </button>
+
+                                                <button
+                                                    type="button"
+                                                    onClick={(e) => {
+                                                        e.stopPropagation();
+                                                        handleExportCollection(col.title);
+                                                    }}
+                                                    className="w-full flex items-center gap-2.5 px-4 py-2 text-xs font-medium text-emerald-400 hover:bg-emerald-500/20 hover:text-emerald-300 transition-colors"
+                                                >
+                                                    <FiDownload className="text-sm" />
+                                                    <span>Export for AI</span>
                                                 </button>
                                             </div>
                                         )}

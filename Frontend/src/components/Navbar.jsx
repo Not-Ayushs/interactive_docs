@@ -1,10 +1,18 @@
 import React, { useState } from 'react';
-import { Link } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 import CapsuleButton from './CapsuleButton';
 import { FiMenu, FiX } from 'react-icons/fi';
 
 export default function Navbar() {
     const [mobileOpen, setMobileOpen] = useState(false);
+    const navigate = useNavigate();
+    const isLoggedIn = !!localStorage.getItem('token');
+
+    const handleLogout = () => {
+        localStorage.removeItem('token');
+        localStorage.removeItem('userInfo');
+        navigate(0); // Refresh the page to reflect state
+    };
 
     const scrollToSection = (e, id) => {
         e.preventDefault();
@@ -46,12 +54,25 @@ export default function Navbar() {
 
                 {/* Desktop Action Buttons */}
                 <div className="hidden md:flex items-center gap-3">
-                    <Link to="/app/dashboard">
-                        <CapsuleButton label="Sign In" type="outline" className="px-5 py-2 text-sm font-semibold" />
-                    </Link>
-                    <Link to="/app/dashboard">
-                        <CapsuleButton label="Sign Up" type="active" className="px-5 py-2 text-sm font-semibold" />
-                    </Link>
+                    {isLoggedIn ? (
+                        <>
+                            <Link to="/app/dashboard">
+                                <CapsuleButton label="Dashboard" type="active" className="px-5 py-2 text-sm font-semibold" />
+                            </Link>
+                            <button onClick={handleLogout}>
+                                <CapsuleButton label="Logout" type="outline" className="px-5 py-2 text-sm font-semibold cursor-pointer" />
+                            </button>
+                        </>
+                    ) : (
+                        <>
+                            <Link to="/login">
+                                <CapsuleButton label="Sign In" type="outline" className="px-5 py-2 text-sm font-semibold" />
+                            </Link>
+                            <Link to="/signup">
+                                <CapsuleButton label="Sign Up" type="active" className="px-5 py-2 text-sm font-semibold" />
+                            </Link>
+                        </>
+                    )}
                 </div>
 
                 {/* Mobile Hamburger Button */}
@@ -78,12 +99,25 @@ export default function Navbar() {
                         </a>
                     ))}
                     <div className="flex flex-col gap-3 pt-2">
-                        <Link to="/app/dashboard" onClick={() => setMobileOpen(false)}>
-                            <CapsuleButton label="Sign In" type="outline" className="w-full py-2.5 text-sm font-semibold" />
-                        </Link>
-                        <Link to="/app/dashboard" onClick={() => setMobileOpen(false)}>
-                            <CapsuleButton label="Sign Up" type="active" className="w-full py-2.5 text-sm font-semibold" />
-                        </Link>
+                        {isLoggedIn ? (
+                            <>
+                                <Link to="/app/dashboard" onClick={() => setMobileOpen(false)}>
+                                    <CapsuleButton label="Dashboard" type="active" className="w-full py-2.5 text-sm font-semibold" />
+                                </Link>
+                                <button onClick={() => { setMobileOpen(false); handleLogout(); }}>
+                                    <CapsuleButton label="Logout" type="outline" className="w-full py-2.5 text-sm font-semibold cursor-pointer" />
+                                </button>
+                            </>
+                        ) : (
+                            <>
+                                <Link to="/login" onClick={() => setMobileOpen(false)}>
+                                    <CapsuleButton label="Sign In" type="outline" className="w-full py-2.5 text-sm font-semibold" />
+                                </Link>
+                                <Link to="/signup" onClick={() => setMobileOpen(false)}>
+                                    <CapsuleButton label="Sign Up" type="active" className="w-full py-2.5 text-sm font-semibold" />
+                                </Link>
+                            </>
+                        )}
                     </div>
                 </div>
             )}

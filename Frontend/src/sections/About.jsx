@@ -1,5 +1,5 @@
 import React from 'react';
-import { FiLayers, FiFileText, FiFolder, FiZap } from 'react-icons/fi';
+import { FiLayers, FiFileText, FiFolder, FiZap, FiDownload } from 'react-icons/fi';
 
 const FEATURES = [
     {
@@ -8,9 +8,9 @@ const FEATURES = [
         desc: 'Organize notes and documents into custom folders with dynamic empty and filed folder visual indicators.'
     },
     {
-        icon: FiFileText,
-        title: 'Full-Page Rich Editor',
-        desc: 'Experience a distraction-free Google Docs-style document editor with Tiptap formatting capabilities.'
+        icon: FiDownload,
+        title: 'AI-Ready Markdown',
+        desc: 'Export your entire folder collection into perfectly formatted .md files, ready to feed directly into ChatGPT or Claude.'
     },
     {
         icon: FiZap,

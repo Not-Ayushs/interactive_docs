@@ -28,7 +28,7 @@ const PRICING_TIERS = [
         features: [
             'Unlimited Collections',
             'Unlimited Document Cards',
-            'Google Docs-Style Full Editor',
+            'Export Collections for AI (.md)',
             'MongoDB Cloud Sync',
             'Dynamic Folder Categorization',
             'Priority Support'

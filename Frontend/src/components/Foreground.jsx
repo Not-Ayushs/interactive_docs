@@ -17,7 +17,12 @@ export default function Foreground({ className = "", collectionName = "" }) {
             ? `${apiBaseUrl}/api/documents?collectionName=${encodeURIComponent(collectionName)}`
             : `${apiBaseUrl}/api/documents`;
 
-        fetch(url)
+        const token = localStorage.getItem('token');
+        fetch(url, {
+            headers: {
+                "Authorization": `Bearer ${token}`
+            }
+        })
             .then(res => res.json())
             .then(docs => setData(docs))
             .catch(err => console.error("Error fetching documents:", err));

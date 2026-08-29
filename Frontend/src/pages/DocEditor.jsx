@@ -20,7 +20,12 @@ export default function DocEditor() {
 
     useEffect(() => {
         const apiBaseUrl = getApiBaseUrl();
-        fetch(`${apiBaseUrl}/api/documents/${docId}`)
+        const token = localStorage.getItem('token');
+        fetch(`${apiBaseUrl}/api/documents/${docId}`, {
+            headers: {
+                "Authorization": `Bearer ${token}`
+            }
+        })
             .then(res => {
                 if (!res.ok) throw new Error("Document not found");
                 return res.json();
@@ -54,7 +59,8 @@ export default function DocEditor() {
         fetch(`${apiBaseUrl}/api/documents/${docId}`, {
             method: 'PUT',
             headers: {
-                'Content-Type': 'application/json'
+                'Content-Type': 'application/json',
+                "Authorization": `Bearer ${localStorage.getItem('token')}`
             },
             body: JSON.stringify({ desc: currentContent })
         })

@@ -2,6 +2,11 @@ import mongoose from "mongoose";
 
 const documentSchema = new mongoose.Schema(
   {
+    userId: {
+      type: mongoose.Schema.Types.ObjectId,
+      required: true,
+      ref: "User",
+    },
     title: {
         type: String,
         default: "Untitled Document"

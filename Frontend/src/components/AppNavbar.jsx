@@ -1,10 +1,17 @@
 import React from 'react';
-import { NavLink, Link, useLocation } from 'react-router-dom';
+import { NavLink, Link, useLocation, useNavigate } from 'react-router-dom';
 import { FiHome, FiFolder, FiLogOut } from 'react-icons/fi';
 import CapsuleButton from './CapsuleButton';
 
 export default function AppNavbar() {
     const location = useLocation();
+    const navigate = useNavigate();
+
+    const handleLogout = () => {
+        localStorage.removeItem('token');
+        localStorage.removeItem('userInfo');
+        navigate('/');
+    };
 
     return (
         <header className="fixed top-0 left-0 w-full z-50 bg-[#0A0E15]/85 backdrop-blur-md border-b border-zinc-800/60 px-4 sm:px-8 py-3 sm:py-3.5 flex items-center justify-between shadow-lg">
@@ -40,15 +47,15 @@ export default function AppNavbar() {
                 </NavLink>
             </nav>
 
-            {/* Right: Exit App Icon Button */}
-            <Link 
-                to="/" 
-                className="flex items-center gap-2 px-2 sm:px-3.5 py-1.5 rounded-full text-zinc-400 hover:text-white hover:bg-zinc-800/60 transition-all duration-200 text-xs font-medium border border-transparent hover:border-zinc-700"
-                title="Exit App (Return to Landing Page)"
+            {/* Right: Logout Button */}
+            <button 
+                onClick={handleLogout}
+                className="flex items-center gap-2 px-2 sm:px-3.5 py-1.5 rounded-full text-zinc-400 hover:text-white hover:bg-zinc-800/60 transition-all duration-200 text-xs font-medium border border-transparent hover:border-zinc-700 cursor-pointer"
+                title="Logout"
             >
                 <FiLogOut className="text-lg sm:text-sm text-white" />
-                <span className="hidden sm:inline">Exit App</span>
-            </Link>
+                <span className="hidden sm:inline">Logout</span>
+            </button>
         </header>
     );
 }

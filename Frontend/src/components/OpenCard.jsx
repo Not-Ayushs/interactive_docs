@@ -26,7 +26,8 @@ export default function OpenCard({ showModal, setShowModal, doc, onUpdate }) {
         fetch(`${apiBaseUrl}/api/documents/${doc._id}`, {
             method: "PUT",
             headers: {
-                "Content-Type": "application/json"
+                "Content-Type": "application/json",
+                "Authorization": `Bearer ${localStorage.getItem('token')}`
             },
             body: JSON.stringify({ desc: currentContent })
         })

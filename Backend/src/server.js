@@ -3,6 +3,9 @@ import cors from "cors";
 import dotenv from "dotenv";
 import connectDB from "./config/db.js";
 import Document from "./models/Document.js";
+import User from "./models/user.js";
+import jwt from "jsonwebtoken";
+import { protect } from "./middleware/authMiddleware.js";
 
 dotenv.config();
 
@@ -10,7 +13,10 @@ const app = express();
 
 connectDB();
 
-app.use(cors());
+app.use(cors({
+  origin: "http://localhost:5173",
+  credentials: true,
+}));
 app.use(express.json());
 
 app.get("/", (req, res) => {
@@ -23,31 +29,66 @@ app.get("/dashboard", (req, res) => {
   res.redirect("http://localhost:5173");
 });
 
+const generateToken = (id) => {
+  return jwt.sign({ id }, process.env.JWT_SECRET || "defaultsecret", {
+    expiresIn: "30d",
+  });
+};
+
+// POST /api/auth/signup
+app.post("/api/auth/signup", async (req, res) => {
+  try {
+    const { name, email, password } = req.body;
+    const userExists = await User.findOne({ email });
+    if (userExists) {
+      return res.status(400).json({ message: "User already exists" });
+    }
+    const user = await User.create({ name, email, password });
+    if (user) {
+      res.status(201).json({
+        _id: user._id,
+        name: user.name,
+        email: user.email,
+        token: generateToken(user._id),
+      });
+    } else {
+      res.status(400).json({ message: "Invalid user data" });
+    }
+  } catch (error) {
+    res.status(500).json({ message: error.message });
+  }
+});
+
+// POST /api/auth/signin
+app.post("/api/auth/signin", async (req, res) => {
+  try {
+    const { email, password } = req.body;
+    const user = await User.findOne({ email });
+    if (user && (await user.matchPassword(password))) {
+      res.json({
+        _id: user._id,
+        name: user.name,
+        email: user.email,
+        token: generateToken(user._id),
+      });
+    } else {
+      res.status(401).json({ message: "Invalid email or password" });
+    }
+  } catch (error) {
+    res.status(500).json({ message: error.message });
+  }
+});
+
 // GET documents (supports optional ?collectionName= query param)
-app.get("/api/documents", async (req, res) => {
+app.get("/api/documents", protect, async (req, res) => {
     try {
         const { collectionName } = req.query;
-        let query = {};
+        let query = { userId: req.user._id };
         if (collectionName) {
             query.collectionName = collectionName;
         }
 
         let documents = await Document.find(query);
-        
-        // Auto-seed database if completely empty
-        if ((await Document.countDocuments({})) === 0) {
-            const seedData = [
-                { desc: "Medical Research Notes & Clinical Case Studies", filesize: ".9mb", collectionName: "Medical Research", tag: { tagTitle: "MBBS", tagColor: "green" }},
-                { desc: "Frontend Architecture & System Guidelines", filesize: "1.2mb", collectionName: "Engineering", tag: { tagTitle: "Engineering", tagColor: "blue" }},
-                { desc: "General Project Notes, Ideas & Daily Standup Log", filesize: "0.5mb", collectionName: "General", tag: { tagTitle: "General Notes", tagColor: "sky" }},
-                { desc: "Design System UI Components, Tokens & Branding Assets", filesize: "1.8mb", collectionName: "Design System", tag: { tagTitle: "Design System", tagColor: "amber" }},
-                { desc: "API Specifications, Endpoints & Authentication Guides", filesize: "1.1mb", collectionName: "API Specs & References", tag: { tagTitle: "API Specs", tagColor: "blue" }},
-                { desc: "Project Notes & Sprint Archives Summary", filesize: "0.7mb", collectionName: "Project Notes", tag: { tagTitle: "Project Notes", tagColor: "green" }}
-            ];
-            await Document.insertMany(seedData);
-            documents = await Document.find(query);
-        }
-
         res.json(documents);
     } catch (error) {
         res.status(500).json({ message: error.message });
@@ -55,21 +96,51 @@ app.get("/api/documents", async (req, res) => {
 });
 
 // GET a single document by ID
-app.get("/api/documents/:id", async (req, res) => {
+app.get("/api/documents/:id", protect, async (req, res) => {
     try {
-        const doc = await Document.findById(req.params.id);
-        if (!doc) return res.status(404).json({ message: "Document not found" });
+        const doc = await Document.findOne({ _id: req.params.id, userId: req.user._id });
+        if (!doc) return res.status(404).json({ message: "Document not found or unauthorized" });
         res.json(doc);
     } catch (error) {
         res.status(500).json({ message: error.message });
     }
 });
 
+// GET export a collection to markdown
+app.get("/api/collections/:collectionName/export", protect, async (req, res) => {
+    try {
+        const { collectionName } = req.params;
+        const documents = await Document.find({ collectionName, userId: req.user._id });
+        
+        let markdownString = `# Collection: ${collectionName}\n*Generated by iDOCS*\n\n---\n\n`;
+        
+        if (documents.length === 0) {
+            markdownString += `*This collection is currently empty.*\n`;
+        } else {
+            documents.forEach(doc => {
+                markdownString += `## Tag: ${doc.tag?.tagTitle || 'Untitled'}\n`;
+                if (doc.createdAt) {
+                    markdownString += `**Created at:** ${new Date(doc.createdAt).toLocaleDateString()}\n\n`;
+                } else {
+                    markdownString += `\n`;
+                }
+                markdownString += `${doc.desc || ''}\n\n`;
+                markdownString += `---\n\n`;
+            });
+        }
+        
+        res.json({ markdown: markdownString });
+    } catch (error) {
+        res.status(500).json({ message: error.message });
+    }
+});
+
 // POST a new document
-app.post("/api/documents", async (req, res) => {
+app.post("/api/documents", protect, async (req, res) => {
     try {
         const { desc, filesize, tag, collectionName } = req.body;
         const newDoc = new Document({
+            userId: req.user._id,
             desc,
             filesize,
             tag,
@@ -83,14 +154,15 @@ app.post("/api/documents", async (req, res) => {
 });
 
 // PUT (update) an existing document
-app.put("/api/documents/:id", async (req, res) => {
+app.put("/api/documents/:id", protect, async (req, res) => {
     try {
         const { desc } = req.body;
-        const updatedDoc = await Document.findByIdAndUpdate(
-            req.params.id,
+        const updatedDoc = await Document.findOneAndUpdate(
+            { _id: req.params.id, userId: req.user._id },
             { desc },
             { new: true }
         );
+        if (!updatedDoc) return res.status(404).json({ message: "Document not found or unauthorized" });
         res.json(updatedDoc);
     } catch (error) {
         res.status(400).json({ message: error.message });
