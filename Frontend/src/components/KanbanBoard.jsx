@@ -96,9 +96,13 @@ export default function KanbanBoard({ collectionName, onAddClick }) {
             });
             if (res.ok) {
                 fetchCards();
+            } else {
+                const err = await res.json();
+                alert(`Error creating card: ${err.message || 'Unknown error'}`);
             }
         } catch (error) {
             console.error("Error creating card:", error);
+            alert("Network error: Could not reach the server. Please check your connection or CORS settings.");
         }
     };
 

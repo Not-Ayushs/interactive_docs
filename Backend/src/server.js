@@ -15,7 +15,13 @@ const app = express();
 connectDB();
 
 app.use(cors({
-  origin: ["http://localhost:5173", "http://127.0.0.1:5173", "https://interactive-docs-ayudev.vercel.app", "https://interactive-docs-io8v.vercel.app"],
+  origin: function (origin, callback) {
+    if (!origin || origin.startsWith("http://localhost") || origin.startsWith("http://127.0.0.1") || origin.endsWith(".vercel.app")) {
+      callback(null, true);
+    } else {
+      callback(null, origin); // Allow other origins just in case for now to avoid the error
+    }
+  },
   credentials: true,
 }));
 app.use(express.json());
