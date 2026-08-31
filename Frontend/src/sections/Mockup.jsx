@@ -26,11 +26,7 @@ export default function Mockup() {
                         <div className="rounded-xl sm:rounded-2xl overflow-hidden border border-zinc-800/80 shadow-inner">
                             {/* Browser-style top bar */}
                             <div className="bg-zinc-900 flex items-center gap-2 px-4 py-2.5 border-b border-zinc-800/80">
-                                <div className="flex items-center gap-1.5">
-                                    <div className="w-2.5 h-2.5 rounded-full bg-red-500/70" />
-                                    <div className="w-2.5 h-2.5 rounded-full bg-amber-500/70" />
-                                    <div className="w-2.5 h-2.5 rounded-full bg-green-500/70" />
-                                </div>
+
                                 <div className="flex-1 mx-4">
                                     <div className="bg-zinc-800/80 rounded-md px-3 py-1 text-[10px] text-zinc-500 font-mono text-left w-full max-w-xs mx-auto truncate">
                                         interactive-docs.vercel.app/app/dashboard

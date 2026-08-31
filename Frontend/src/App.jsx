@@ -11,6 +11,16 @@ import Signup from './pages/Signup.jsx'
 import Prank from './pages/Prank.jsx'
 import FeatureShow from './testComponents/featureShow.jsx'
 
+import { Navigate } from 'react-router-dom'
+
+const ProtectedRoute = ({ children }) => {
+  const token = localStorage.getItem('token');
+  if (!token) {
+    return <Navigate to="/login" replace />;
+  }
+  return children;
+};
+
 function App() {
   return (
     <div className="relative w-full h-screen bg-[#0A0E15] overflow-hidden">
@@ -19,10 +29,11 @@ function App() {
           <Route path="/" element={<Landing />} />
           <Route path="/login" element={<Login />} />
           <Route path="/signup" element={<Signup />} />
-          <Route path="/app/dashboard" element={<Dashboard />} />
-          <Route path="/app/collections" element={<Collections />} />
-          <Route path="/app/collections/:collectionName" element={<CollectionOpen />} />
-          <Route path="/app/editor/:docId" element={<DocEditor />} />
+          
+          <Route path="/app/dashboard" element={<ProtectedRoute><Dashboard /></ProtectedRoute>} />
+          <Route path="/app/collections" element={<ProtectedRoute><Collections /></ProtectedRoute>} />
+          <Route path="/app/collections/:collectionName" element={<ProtectedRoute><CollectionOpen /></ProtectedRoute>} />
+          <Route path="/app/editor/:docId" element={<ProtectedRoute><DocEditor /></ProtectedRoute>} />
           
           {/* Prank Routes for Snooping Friends */}
           <Route path="/docs" element={<Prank />} />

@@ -4,6 +4,7 @@ import dotenv from "dotenv";
 import connectDB from "./config/db.js";
 import Document from "./models/Document.js";
 import User from "./models/user.js";
+import KanbanCard from "./models/KanbanCard.js";
 import jwt from "jsonwebtoken";
 import { protect } from "./middleware/authMiddleware.js";
 
@@ -14,7 +15,7 @@ const app = express();
 connectDB();
 
 app.use(cors({
-  origin: ["http://localhost:5173", "https://interactive-docs-ayudev.vercel.app", "https://interactive-docs-io8v.vercel.app"],
+  origin: ["http://localhost:5173", "http://127.0.0.1:5173", "https://interactive-docs-ayudev.vercel.app", "https://interactive-docs-io8v.vercel.app"],
   credentials: true,
 }));
 app.use(express.json());
@@ -166,6 +167,75 @@ app.put("/api/documents/:id", protect, async (req, res) => {
         res.json(updatedDoc);
     } catch (error) {
         res.status(400).json({ message: error.message });
+    }
+});
+
+// GET kanban cards (supports optional ?collectionName= query param)
+app.get("/api/kanban", protect, async (req, res) => {
+    try {
+        const { collectionName } = req.query;
+        let query = { userId: req.user._id };
+        if (collectionName) {
+            query.collectionName = collectionName;
+        }
+
+        let cards = await KanbanCard.find(query).sort({ order: 1 });
+        res.json(cards);
+    } catch (error) {
+        res.status(500).json({ message: error.message });
+    }
+});
+
+// POST a new kanban card
+app.post("/api/kanban", protect, async (req, res) => {
+    try {
+        const { title, desc, status, order, collectionName } = req.body;
+        const newCard = new KanbanCard({
+            userId: req.user._id,
+            title: title || "New Card",
+            desc,
+            status: status || "User story",
+            order: order || 0,
+            collectionName: collectionName || "General"
+        });
+        const savedCard = await newCard.save();
+        res.status(201).json(savedCard);
+    } catch (error) {
+        res.status(400).json({ message: error.message });
+    }
+});
+
+// PUT (update) an existing kanban card (drag and drop)
+app.put("/api/kanban/:id", protect, async (req, res) => {
+    try {
+        const { title, desc, status, order } = req.body;
+        
+        let updateFields = {};
+        if (title !== undefined) updateFields.title = title;
+        if (desc !== undefined) updateFields.desc = desc;
+        if (status !== undefined) updateFields.status = status;
+        if (order !== undefined) updateFields.order = order;
+
+        const updatedCard = await KanbanCard.findOneAndUpdate(
+            { _id: req.params.id, userId: req.user._id },
+            updateFields,
+            { new: true }
+        );
+        if (!updatedCard) return res.status(404).json({ message: "Card not found or unauthorized" });
+        res.json(updatedCard);
+    } catch (error) {
+        res.status(400).json({ message: error.message });
+    }
+});
+
+// DELETE a kanban card
+app.delete("/api/kanban/:id", protect, async (req, res) => {
+    try {
+        const deletedCard = await KanbanCard.findOneAndDelete({ _id: req.params.id, userId: req.user._id });
+        if (!deletedCard) return res.status(404).json({ message: "Card not found or unauthorized" });
+        res.json({ message: "Card removed" });
+    } catch (error) {
+        res.status(500).json({ message: error.message });
     }
 });
 

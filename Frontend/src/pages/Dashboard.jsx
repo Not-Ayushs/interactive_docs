@@ -1,75 +1,18 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import AppNavbar from '../components/AppNavbar.jsx';
+import Sidebar from '../components/Sidebar.jsx';
 import Background from '../components/Background.jsx';
-import DashboardCard from '../components/DashboardCard.jsx';
 import AddDocButton from '../components/AddDocButton.jsx';
 import AddDocModal from '../components/AddDocModal.jsx';
-import { 
-    FiSearch, FiFileText, FiCode, FiDatabase, 
-    FiLayers, FiZap, FiFolder 
-} from 'react-icons/fi';
+import { FiSearch, FiPlus, FiDownload, FiTrash2 } from 'react-icons/fi';
 import { getApiBaseUrl } from '../utils/api.js';
 
-const SAMPLE_DOCS = [
-    {
-        _id: 'doc-1',
-        collectionName: 'Engineering',
-        title: 'Product Specs',
-        desc: 'Centralized documentation for feature requirements, user stories, and technical specs across releases.',
-        tag: { tagTitle: 'Product Specs' },
-        icon: FiFileText
-    },
-    {
-        _id: 'doc-2',
-        collectionName: 'Engineering',
-        title: 'Engineering Guidelines',
-        desc: 'Best practices, coding standards, and architecture decisions to keep engineering consistent and scalable.',
-        tag: { tagTitle: 'Engineering Guidelines' },
-        icon: FiCode
-    },
-    {
-        _id: 'doc-3',
-        collectionName: 'API References',
-        title: 'API References',
-        desc: 'Endpoint definitions, payload structures, and authentication guides for internal and external API use.',
-        tag: { tagTitle: 'API References' },
-        icon: FiDatabase
-    },
-    {
-        _id: 'doc-4',
-        collectionName: 'Design System',
-        title: 'Design System',
-        desc: 'Components, UI patterns, usage rules, and branding assets for maintaining visual and UX consistency.',
-        tag: { tagTitle: 'Design System' },
-        icon: FiLayers
-    },
-    {
-        _id: 'doc-5',
-        collectionName: 'Release Notes',
-        title: 'Release Notes',
-        desc: 'Chronological logs of version changes, bug fixes, new features, and known issues across builds.',
-        tag: { tagTitle: 'Release Notes' },
-        icon: FiFileText
-    },
-    {
-        _id: 'doc-6',
-        collectionName: 'Sprint Archives',
-        title: 'Sprint Archives',
-        desc: 'Past sprint plans, retrospectives, and key decisions for tracking team velocity and iteration history.',
-        tag: { tagTitle: 'Sprint Archives' },
-        icon: FiZap
-    }
-];
-
 const DEFAULT_SHORTCUTS = [
-    { title: 'Research & Testing' },
-    { title: 'Integrations & Webhooks' },
-    { title: 'API Specs & References' },
-    { title: 'Analytics & Metrics' },
-    { title: 'Security & Compliance' },
-    { title: 'Roadmaps & OKRs' },
-    { title: 'Archived Projects' }
+    { title: 'Promotion', edited: 'Edited 2 days ago' },
+    { title: 'Store', edited: 'Edited 5 days ago' },
+    { title: 'Gold store', edited: 'Edited 8 days ago' },
+    { title: 'Milke', edited: 'Edited 10 days ago' },
+    { title: 'InStore', edited: 'Edited 17 days ago' },
 ];
 
 export default function Dashboard() {
@@ -78,6 +21,7 @@ export default function Dashboard() {
     const [shortcuts, setShortcuts] = useState(DEFAULT_SHORTCUTS);
     const [searchQuery, setSearchQuery] = useState('');
     const [showAddModal, setShowAddModal] = useState(false);
+    const [sidebarOpen, setSidebarOpen] = useState(true);
 
     useEffect(() => {
         const apiBaseUrl = getApiBaseUrl();
@@ -91,11 +35,9 @@ export default function Dashboard() {
             .then(docs => {
                 if (Array.isArray(docs) && docs.length > 0) {
                     setDocuments(docs);
-                } else {
-                    setDocuments(SAMPLE_DOCS);
                 }
             })
-            .catch(() => setDocuments(SAMPLE_DOCS));
+            .catch(() => {});
     }, []);
 
     useEffect(() => {
@@ -105,14 +47,12 @@ export default function Dashboard() {
                 const userCols = JSON.parse(saved);
                 if (Array.isArray(userCols) && userCols.length > 0) {
                     const combined = [
-                        ...userCols.map(c => ({ title: c.title })),
+                        ...userCols.map(c => ({ title: c.title, edited: 'Edited recently' })),
                         ...DEFAULT_SHORTCUTS.filter(ds => !userCols.some(uc => uc.title === ds.title))
                     ];
                     setShortcuts(combined);
                 }
-            } catch (e) {
-                setShortcuts(DEFAULT_SHORTCUTS);
-            }
+            } catch (e) {}
         }
     }, []);
 
@@ -120,86 +60,79 @@ export default function Dashboard() {
         setDocuments(prev => [newDoc, ...prev]);
     };
 
-    const iconsList = [FiFileText, FiCode, FiDatabase, FiLayers, FiZap];
-
-    const filteredDocs = documents.filter(doc => {
-        const title = doc.tag?.tagTitle || doc.title || '';
-        const desc = doc.desc || '';
-        const query = searchQuery.toLowerCase();
-        return title.toLowerCase().includes(query) || desc.toLowerCase().includes(query);
-    });
+    const filteredShortcuts = shortcuts.filter(sc => 
+        sc.title.toLowerCase().includes(searchQuery.toLowerCase())
+    );
 
     return (
-        <div className="relative w-full h-screen overflow-hidden bg-[#0A0E15]">
-            <AppNavbar />
+        <div className="relative w-full h-screen overflow-hidden bg-[#0A0A0A]">
+            <Sidebar isOpen={sidebarOpen} setIsOpen={setSidebarOpen} />
             <Background />
 
-            {/* Scrollable Dashboard View */}
-            <div className="fixed inset-0 z-20 pt-20 sm:pt-24 px-6 sm:px-10 pb-20 sm:pb-16 overflow-y-auto flex flex-col items-center">
-                <div className="w-full max-w-6xl">
-                    
-                    {/* Top Header Row: DOCS. title + Search bar */}
-                    <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-6 sm:mb-8">
-                        <h1 className="text-2xl sm:text-3xl font-extrabold text-white tracking-tight">
-                            Recent Docs
+            {/* Main Content Area */}
+            <div className={`transition-all duration-300 h-full flex flex-col z-20 relative ${sidebarOpen ? 'pl-[240px]' : 'pl-[80px]'}`}>
+                
+                {/* Header Section */}
+                <div className="px-10 pt-12 pb-6 border-b border-zinc-800/50 flex items-end justify-between">
+                    <div>
+                        <p className="text-zinc-500 text-sm mb-1">Choose project:</p>
+                        <h1 className="text-3xl font-bold text-white">
+                            Choose a project to work
                         </h1>
+                    </div>
 
-                        <div className="relative w-full sm:w-72">
-                            <FiSearch className="absolute left-3.5 top-1/2 -translate-y-1/2 text-zinc-400 text-base" />
+                    <div className="flex items-center gap-4">
+                        <div className="relative w-64">
                             <input
                                 type="text"
                                 value={searchQuery}
                                 onChange={(e) => setSearchQuery(e.target.value)}
                                 placeholder="Search"
-                                className="w-full bg-zinc-900/90 border border-zinc-800 focus:border-zinc-600 rounded-xl py-2 pl-10 pr-4 text-sm text-white placeholder-zinc-500 focus:outline-none transition-colors"
+                                className="w-full bg-[#111111] border border-zinc-800 rounded-lg py-2 px-4 text-sm text-white placeholder-zinc-500 focus:outline-none focus:border-zinc-600 transition-colors"
                             />
+                            <FiSearch className="absolute right-3 top-1/2 -translate-y-1/2 text-zinc-500" />
+                        </div>
+                        
+                        <div className="flex gap-2">
+                            <button onClick={() => setShowAddModal(true)} className="flex items-center gap-2 px-3 py-2 text-sm text-zinc-400 hover:text-white transition-colors bg-[#111111] rounded-lg border border-zinc-800">
+                                <FiPlus size={16} /> Create
+                            </button>
+                            <button className="flex items-center gap-2 px-3 py-2 text-sm text-zinc-400 hover:text-white transition-colors bg-[#111111] rounded-lg border border-zinc-800">
+                                <FiTrash2 size={16} /> Remove
+                            </button>
                         </div>
                     </div>
+                </div>
 
-                    {/* Recent Document Cards Grid */}
-                    <div className="grid grid-cols-2 sm:flex sm:flex-wrap justify-center sm:justify-start gap-4 sm:gap-6 mb-10 sm:mb-12">
-                        {filteredDocs.map((doc, idx) => (
-                            <DashboardCard
-                                key={doc._id || idx}
-                                doc={doc}
-                                icon={doc.icon || iconsList[idx % iconsList.length]}
-                            />
-                        ))}
-                    </div>
-
-                    {/* Bottom Shortcut Section */}
-                    <div className="mt-4 pt-6 border-t border-zinc-800/60">
-                        <h2 className="text-xl font-bold text-white mb-6">
-                            Shortcut
-                        </h2>
-
-                        <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-7 gap-4">
-                            {shortcuts.map((sc, index) => {
-                                const hasDocs = documents.some(doc => doc.collectionName === sc.title);
-                                const folderSrc = hasDocs ? "/FilledFolder.png" : "/NotFiledFolder.png";
-                                
-                                return (
+                {/* Content Grid */}
+                <div className="flex-1 overflow-y-auto p-10">
+                    <div className="flex flex-wrap gap-10 mt-4">
+                        {filteredShortcuts.map((sc, index) => {
+                            const hasDocs = documents.some(doc => doc.collectionName === sc.title);
+                            const folderSrc = hasDocs ? "/FilledFolder.png" : "/NotFiledFolder.png";
+                            
+                            return (
                                 <div
                                     key={index}
                                     onClick={() => navigate(`/app/collections/${encodeURIComponent(sc.title)}`)}
                                     className="group flex flex-col items-center cursor-pointer transition-transform duration-200 hover:scale-105"
                                 >
-                                    <div className="w-24 h-20 relative flex items-center justify-center">
+                                    <div className="w-32 h-28 relative flex items-center justify-center">
                                         <img
                                             src={folderSrc}
                                             alt="Folder"
                                             className="w-full h-full object-contain filter group-hover:brightness-125 transition-all"
                                         />
                                     </div>
-                                    <span className="text-xs text-zinc-400 group-hover:text-white font-medium text-center mt-2 max-w-[100px] truncate leading-tight">
+                                    <span className="text-sm text-zinc-400 group-hover:text-white font-medium text-center mt-3 max-w-[120px] truncate leading-tight">
                                         {sc.title}
                                     </span>
                                 </div>
-                            )})}
-                        </div>
+                            )
+                        })}
                     </div>
-
                 </div>
+
             </div>
 
             {/* Floating Add Document (+) Button */}
