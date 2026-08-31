@@ -1,8 +1,9 @@
 import React, { useState, useEffect } from 'react';
 import { FiSearch, FiPlus, FiDownload, FiTrash2 } from 'react-icons/fi';
 import { DragDropContext, Droppable, Draggable } from '@hello-pangea/dnd';
+import { getApiBaseUrl } from '../utils/api.js';
 
-const apiBaseUrl = import.meta.env.VITE_API_BASE_URL || "http://localhost:5000";
+const apiBaseUrl = getApiBaseUrl();
 
 const KanbanColumn = ({ title, docs, onCardClick, onAddClick }) => {
     return (
