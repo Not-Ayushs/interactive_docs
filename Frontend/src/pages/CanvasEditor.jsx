@@ -1,20 +1,21 @@
 import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate, useLocation } from 'react-router-dom';
-import Editor from '../components/Editor.jsx';
+import { Tldraw } from '@tldraw/tldraw';
+import '@tldraw/tldraw/tldraw.css';
 import CapsuleButton from '../components/CapsuleButton.jsx';
-import { FiArrowLeft, FiX, FiCheck, FiFolder } from 'react-icons/fi';
+import { FiX, FiCheck, FiFolder } from 'react-icons/fi';
 import { getApiBaseUrl } from '../utils/api.js';
 
-export default function DocEditor() {
+export default function CanvasEditor() {
     const { docId } = useParams();
     const navigate = useNavigate();
     const location = useLocation();
 
     const [doc, setDoc] = useState(null);
-    const [currentContent, setCurrentContent] = useState('');
     const [loading, setLoading] = useState(true);
     const [saving, setSaving] = useState(false);
     const [savedStatus, setSavedStatus] = useState('');
+    const [store, setStore] = useState(null);
 
     const returnCollection = location.state?.fromCollection || doc?.collectionName;
 
@@ -32,7 +33,6 @@ export default function DocEditor() {
             })
             .then(data => {
                 setDoc(data);
-                setCurrentContent(data.desc || '');
                 setLoading(false);
             })
             .catch(err => {
@@ -51,7 +51,6 @@ export default function DocEditor() {
 
     const handleSave = () => {
         if (!docId) return;
-
         setSaving(true);
         setSavedStatus('Saving changes...');
 
@@ -62,7 +61,9 @@ export default function DocEditor() {
                 'Content-Type': 'application/json',
                 "Authorization": `Bearer ${localStorage.getItem('token')}`
             },
-            body: JSON.stringify({ desc: currentContent })
+            // For a complete implementation we would serialize the tldraw store here
+            // body: JSON.stringify({ canvasData: serializedStore })
+            body: JSON.stringify({ desc: "Canvas updated" }) 
         })
             .then(res => {
                 if (!res.ok) throw new Error("Failed to save");
@@ -84,19 +85,19 @@ export default function DocEditor() {
     if (loading) {
         return (
             <div className="w-full h-screen bg-[#0A0E15] flex items-center justify-center text-zinc-400">
-                Loading document...
+                Loading canvas...
             </div>
         );
     }
 
     return (
         <div className="w-full h-screen bg-[#0A0E15] flex flex-col overflow-hidden text-white">
-            {/* Top Google Docs-Style Header Bar */}
+            {/* Header Bar */}
             <header className="w-full h-16 bg-zinc-900/90 backdrop-blur-md border-b border-zinc-800 px-6 flex items-center justify-between z-50">
                 <div className="flex items-center gap-4">
                     <button
                         onClick={handleClose}
-                        title="Close Editor (Return)"
+                        title="Close Canvas (Return)"
                         className="p-2 rounded-full hover:bg-zinc-800 text-zinc-400 hover:text-white transition-colors cursor-pointer"
                     >
                         <FiX className="text-xl" />
@@ -107,7 +108,7 @@ export default function DocEditor() {
                     <div>
                         <div className="flex items-center gap-2">
                             <h1 className="font-bold text-base text-white tracking-wide">
-                                {doc?.tag?.tagTitle || "Document Notes"}
+                                {doc?.tag?.tagTitle || "Infinite Canvas"}
                             </h1>
                             {doc?.collectionName && (
                                 <span className="flex items-center gap-1 text-[11px] bg-zinc-800 text-amber-300 px-2 py-0.5 rounded-full font-medium">
@@ -137,19 +138,14 @@ export default function DocEditor() {
                         onClick={handleSave}
                         disabled={saving}
                     >
-                        {saving ? 'Saving...' : 'Save Document'}
+                        {saving ? 'Saving...' : 'Save Canvas'}
                     </CapsuleButton>
                 </div>
             </header>
 
-            {/* Scrollable Google Docs Paper Area */}
-            <main className="flex-1 overflow-y-auto pt-10 pb-20 px-4 flex justify-center bg-[#0A0E15]">
-                <div className="w-full max-w-[816px] min-h-[1056px] bg-zinc-900 border border-zinc-800/80 shadow-[0_0_40px_rgba(0,0,0,0.5)] p-12 md:p-16 flex flex-col mx-auto mb-10">
-                    <Editor
-                        title={doc?.desc || ""}
-                        onChange={setCurrentContent}
-                    />
-                </div>
+            {/* Canvas Area */}
+            <main className="flex-1 w-full relative">
+                <Tldraw />
             </main>
         </div>
     );

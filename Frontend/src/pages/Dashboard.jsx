@@ -1,10 +1,12 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { useSelector, useDispatch } from 'react-redux';
+import { toggleSidebar } from '../store/uiSlice';
 import Sidebar from '../components/Sidebar.jsx';
 import Background from '../components/Background.jsx';
 import AddDocButton from '../components/AddDocButton.jsx';
 import AddDocModal from '../components/AddDocModal.jsx';
-import { FiSearch, FiPlus, FiDownload, FiTrash2 } from 'react-icons/fi';
+import { FiSearch, FiPlus, FiDownload, FiTrash2, FiMenu } from 'react-icons/fi';
 import { getApiBaseUrl } from '../utils/api.js';
 
 const DEFAULT_SHORTCUTS = [
@@ -21,7 +23,8 @@ export default function Dashboard() {
     const [shortcuts, setShortcuts] = useState(DEFAULT_SHORTCUTS);
     const [searchQuery, setSearchQuery] = useState('');
     const [showAddModal, setShowAddModal] = useState(false);
-    const [sidebarOpen, setSidebarOpen] = useState(true);
+    const sidebarOpen = useSelector((state) => state.ui.sidebarOpen);
+    const dispatch = useDispatch();
 
     useEffect(() => {
         const apiBaseUrl = getApiBaseUrl();
@@ -66,23 +69,31 @@ export default function Dashboard() {
 
     return (
         <div className="relative w-full h-screen overflow-hidden bg-[#0A0A0A]">
-            <Sidebar isOpen={sidebarOpen} setIsOpen={setSidebarOpen} />
+            <Sidebar />
             <Background />
 
             {/* Main Content Area */}
-            <div className={`transition-all duration-300 h-full flex flex-col z-20 relative ${sidebarOpen ? 'pl-[240px]' : 'pl-[80px]'}`}>
+            <div className={`transition-all duration-300 h-full flex flex-col z-20 relative pl-0 ${sidebarOpen ? 'sm:pl-[240px]' : 'sm:pl-[80px]'}`}>
                 
                 {/* Header Section */}
-                <div className="px-10 pt-12 pb-6 border-b border-zinc-800/50 flex items-end justify-between">
-                    <div>
-                        <p className="text-zinc-500 text-sm mb-1">Choose project:</p>
-                        <h1 className="text-3xl font-bold text-white">
-                            Choose a project to work
-                        </h1>
+                <div className="px-4 sm:px-10 pt-12 pb-6 border-b border-zinc-800/50 flex flex-col md:flex-row md:items-end justify-between">
+                    <div className="flex items-center gap-4">
+                        <button 
+                            className="sm:hidden text-zinc-400 hover:text-white"
+                            onClick={() => dispatch(toggleSidebar())}
+                        >
+                            <FiMenu size={24} />
+                        </button>
+                        <div>
+                            <p className="text-zinc-500 text-sm mb-1">Choose project:</p>
+                            <h1 className="text-2xl sm:text-3xl font-bold text-white">
+                                Choose a project to work
+                            </h1>
+                        </div>
                     </div>
 
-                    <div className="flex items-center gap-4">
-                        <div className="relative w-64">
+                    <div className="flex flex-col sm:flex-row items-start sm:items-center gap-4 mt-4 md:mt-0 w-full md:w-auto">
+                        <div className="relative w-full sm:w-64">
                             <input
                                 type="text"
                                 value={searchQuery}
@@ -105,7 +116,7 @@ export default function Dashboard() {
                 </div>
 
                 {/* Content Grid */}
-                <div className="flex-1 overflow-y-auto p-10">
+                <div className="flex-1 overflow-y-auto p-4 sm:p-10">
                     <div className="flex flex-wrap gap-10 mt-4">
                         {filteredShortcuts.map((sc, index) => {
                             const hasDocs = documents.some(doc => doc.collectionName === sc.title);

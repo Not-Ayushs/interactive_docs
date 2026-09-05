@@ -6,6 +6,7 @@ export default function AddDocModal({ showModal, setShowModal, onAdd, collection
     const [desc, setDesc] = useState("");
     const [tagTitle, setTagTitle] = useState("");
     const [tagColor, setTagColor] = useState("green");
+    const [docType, setDocType] = useState("text");
 
     const closeModal = () => {
         setShowModal(false);
@@ -13,15 +14,17 @@ export default function AddDocModal({ showModal, setShowModal, onAdd, collection
         setDesc("");
         setTagTitle("");
         setTagColor("green");
+        setDocType("text");
     };
 
     const handleSave = () => {
-        if (!desc.trim()) return alert("Please enter a description!");
+        if (docType === "text" && !desc.trim()) return alert("Please enter a description!");
 
         const newDoc = {
             desc,
             filesize: ".9mb", // static for mockup
             collectionName: collectionName || "General",
+            docType,
             tag: {
                 isOpen: true,
                 tagTitle: tagTitle || "Untitled Tag",
@@ -68,16 +71,45 @@ export default function AddDocModal({ showModal, setShowModal, onAdd, collection
                         )}
 
                         <div className="flex flex-col gap-4">
-                            {/* Description */}
-                            <div className="flex flex-col gap-1">
-                                <label className="text-xs text-zinc-400 font-semibold uppercase tracking-wider">Description</label>
-                                <textarea 
-                                    className="bg-zinc-950 border border-zinc-800 rounded-xl p-3 focus:outline-none focus:border-white resize-none h-24 text-sm"
-                                    placeholder="Enter document details..."
-                                    value={desc}
-                                    onChange={(e) => setDesc(e.target.value)}
-                                />
+                            {/* Document Type Selection */}
+                            <div className="flex flex-col gap-2">
+                                <label className="text-xs text-zinc-400 font-semibold uppercase tracking-wider">Document Type</label>
+                                <div className="flex gap-4">
+                                    <label className="flex items-center gap-2 cursor-pointer">
+                                        <input 
+                                            type="radio" 
+                                            value="text" 
+                                            checked={docType === "text"} 
+                                            onChange={(e) => setDocType(e.target.value)}
+                                            className="cursor-pointer"
+                                        />
+                                        <span className="text-sm">Text Document</span>
+                                    </label>
+                                    <label className="flex items-center gap-2 cursor-pointer">
+                                        <input 
+                                            type="radio" 
+                                            value="canvas" 
+                                            checked={docType === "canvas"} 
+                                            onChange={(e) => setDocType(e.target.value)}
+                                            className="cursor-pointer"
+                                        />
+                                        <span className="text-sm">Infinite Canvas</span>
+                                    </label>
+                                </div>
                             </div>
+
+                            {/* Description */}
+                            {docType === "text" && (
+                                <div className="flex flex-col gap-1">
+                                    <label className="text-xs text-zinc-400 font-semibold uppercase tracking-wider">Description</label>
+                                    <textarea 
+                                        className="bg-zinc-950 border border-zinc-800 rounded-xl p-3 focus:outline-none focus:border-white resize-none h-24 text-sm"
+                                        placeholder="Enter document details..."
+                                        value={desc}
+                                        onChange={(e) => setDesc(e.target.value)}
+                                    />
+                                </div>
+                            )}
 
                             {/* Tag Title */}
                             <div className="flex flex-col gap-1">

@@ -145,15 +145,30 @@ app.get("/api/collections/:collectionName/export", protect, async (req, res) => 
 // POST a new document
 app.post("/api/documents", protect, async (req, res) => {
     try {
-        const { desc, filesize, tag, collectionName } = req.body;
+        const { desc, filesize, tag, collectionName, docType, title } = req.body;
         const newDoc = new Document({
             userId: req.user._id,
+            title: title || (tag && tag.tagTitle) || "Untitled Document",
             desc,
             filesize,
             tag,
+            docType: docType || "text",
             collectionName: collectionName || "General"
         });
         const savedDoc = await newDoc.save();
+
+        // Sync with KanbanCard so it appears in the Kanban board
+        await KanbanCard.create({
+            _id: savedDoc._id,
+            userId: req.user._id,
+            title: savedDoc.title,
+            desc: savedDoc.desc,
+            status: "User story",
+            order: 0,
+            docType: savedDoc.docType,
+            collectionName: savedDoc.collectionName
+        });
+
         res.status(201).json(savedDoc);
     } catch (error) {
         res.status(400).json({ message: error.message });
@@ -195,16 +210,28 @@ app.get("/api/kanban", protect, async (req, res) => {
 // POST a new kanban card
 app.post("/api/kanban", protect, async (req, res) => {
     try {
-        const { title, desc, status, order, collectionName } = req.body;
+        const { title, desc, status, order, collectionName, docType } = req.body;
         const newCard = new KanbanCard({
             userId: req.user._id,
             title: title || "New Card",
             desc,
             status: status || "User story",
             order: order || 0,
-            collectionName: collectionName || "General"
+            collectionName: collectionName || "General",
+            docType: docType || "text"
         });
         const savedCard = await newCard.save();
+
+        // Also create a corresponding Document so DocEditor/CanvasEditor works
+        await Document.create({
+            _id: savedCard._id, // Sync IDs!
+            userId: req.user._id,
+            title: savedCard.title,
+            desc: savedCard.desc,
+            collectionName: savedCard.collectionName,
+            docType: savedCard.docType
+        });
+
         res.status(201).json(savedCard);
     } catch (error) {
         res.status(400).json({ message: error.message });

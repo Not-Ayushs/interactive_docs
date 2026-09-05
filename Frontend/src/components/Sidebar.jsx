@@ -1,5 +1,7 @@
-import React, { useState } from 'react';
+import React from 'react';
 import { NavLink, useNavigate } from 'react-router-dom';
+import { useSelector, useDispatch } from 'react-redux';
+import { toggleSidebar, setSidebarOpen } from '../store/uiSlice';
 import { 
     FiMenu, FiLayout, FiCommand, FiFolder, 
     FiUser, FiMessageSquare, FiPlus, FiLogOut, FiMap
@@ -7,7 +9,8 @@ import {
 import { BiLayer } from "react-icons/bi";
 
 export default function Sidebar() {
-    const [isOpen, setIsOpen] = useState(true);
+    const isOpen = useSelector((state) => state.ui.sidebarOpen);
+    const dispatch = useDispatch();
     const navigate = useNavigate();
 
     const handleLogout = () => {
@@ -32,14 +35,14 @@ export default function Sidebar() {
     }
 
     return (
-        <div className={`fixed left-0 top-0 h-full bg-[#0A0A0A] border-r border-zinc-800/50 z-50 text-zinc-400 flex flex-col transition-all duration-300 ${isOpen ? 'w-[240px]' : 'w-[80px]'}`}>
+        <div className={`fixed left-0 top-0 h-full bg-[#0A0A0A] border-r border-zinc-800/50 z-50 text-zinc-400 flex flex-col transition-all duration-300 ${isOpen ? 'w-[240px] translate-x-0' : 'w-[80px] -translate-x-full sm:translate-x-0'}`}>
             
             {/* Top Mac-like buttons & Toggle */}
             <div className="flex items-center gap-2 p-4 h-16 shrink-0 mt-2">
 
                 {isOpen && (
                     <button 
-                        onClick={() => setIsOpen(false)} 
+                        onClick={() => dispatch(setSidebarOpen(false))} 
                         className="ml-auto p-1.5 hover:bg-zinc-800/50 rounded-lg cursor-pointer text-zinc-400 hover:text-white transition-colors"
                     >
                         <FiMenu size={20} />
@@ -47,7 +50,7 @@ export default function Sidebar() {
                 )}
                 {!isOpen && (
                     <button 
-                        onClick={() => setIsOpen(true)} 
+                        onClick={() => dispatch(setSidebarOpen(true))} 
                         className="mx-auto mt-6 p-1.5 hover:bg-zinc-800/50 rounded-lg cursor-pointer text-zinc-400 hover:text-white transition-colors absolute top-12 left-1/2 -translate-x-1/2"
                     >
                         <FiMenu size={20} />

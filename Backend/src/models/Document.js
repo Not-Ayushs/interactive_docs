@@ -26,6 +26,11 @@ const documentSchema = new mongoose.Schema(
       default: "General",
     },
 
+    docType: {
+      type: String,
+      default: "text",
+    },
+
     tag: {
 
       tagTitle: {

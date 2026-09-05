@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { FiSearch, FiPlus, FiDownload, FiTrash2 } from 'react-icons/fi';
 import { DragDropContext, Droppable, Draggable } from '@hello-pangea/dnd';
 import { getApiBaseUrl } from '../utils/api.js';
@@ -51,6 +52,7 @@ const KanbanColumn = ({ title, docs, onCardClick, onAddClick }) => {
 };
 
 export default function KanbanBoard({ collectionName, onAddClick }) {
+    const navigate = useNavigate();
     const [searchQuery, setSearchQuery] = useState('');
     const [cards, setCards] = useState([]);
     const [loading, setLoading] = useState(true);
@@ -77,9 +79,22 @@ export default function KanbanBoard({ collectionName, onAddClick }) {
         fetchCards();
     }, [collectionName]);
 
-    const handleAddClick = async (status) => {
-        const title = prompt("Enter card title:");
-        if (!title) return;
+    const [showCreateModal, setShowCreateModal] = useState(false);
+    const [createStatus, setCreateStatus] = useState('');
+    const [createTitle, setCreateTitle] = useState('');
+    const [createType, setCreateType] = useState('text');
+
+    const handleAddClick = (status) => {
+        setCreateStatus(status);
+        setCreateTitle('');
+        setCreateType('text');
+        setShowCreateModal(true);
+    };
+
+    const submitCreateCard = async (e) => {
+        e.preventDefault();
+        if (!createTitle.trim()) return;
+        
         try {
             const res = await fetch(`${apiBaseUrl}/api/kanban`, {
                 method: 'POST',
@@ -88,15 +103,17 @@ export default function KanbanBoard({ collectionName, onAddClick }) {
                     'Authorization': `Bearer ${token}`
                 },
                 body: JSON.stringify({
-                    title,
+                    title: createTitle,
                     desc: "",
-                    status: status,
+                    status: createStatus,
                     collectionName: collectionName || 'General',
-                    order: cards.filter(c => c.status === status).length
+                    docType: createType,
+                    order: cards.filter(c => c.status === createStatus).length
                 })
             });
             if (res.ok) {
                 fetchCards();
+                setShowCreateModal(false);
             } else {
                 const err = await res.json();
                 alert(`Error creating card: ${err.message || 'Unknown error'}`);
@@ -153,24 +170,24 @@ export default function KanbanBoard({ collectionName, onAddClick }) {
     const columns = ['User story', 'To do', 'In progress', 'Done'];
 
     return (
-        <div className="w-full h-full flex flex-col p-10 pt-12 overflow-hidden">
+        <div className="w-full h-full flex flex-col p-4 sm:p-10 pt-6 sm:pt-12 overflow-hidden">
             {/* Header Section */}
             <div className="border-b border-zinc-800/50 flex flex-col sm:flex-row sm:items-end justify-between pb-6 mb-8 shrink-0">
                 <div>
                     <p className="text-zinc-500 text-sm mb-1">Edit your plan:</p>
                     <h1 className="text-3xl font-bold text-white">
-                        Canban board
+                        Kanban board
                     </h1>
                 </div>
 
-                <div className="flex items-center gap-4 mt-4 sm:mt-0">
-                    <div className="flex gap-2">
-                        <button onClick={() => handleAddClick('User story')} className="flex items-center gap-2 px-3 py-2 text-sm text-zinc-400 hover:text-white transition-colors bg-[#1C1D21] rounded-lg border border-zinc-800">
+                <div className="flex flex-col sm:flex-row items-start sm:items-center gap-4 mt-4 sm:mt-0 w-full sm:w-auto">
+                    <div className="flex gap-2 w-full sm:w-auto">
+                        <button onClick={() => handleAddClick('User story')} className="flex items-center gap-2 px-3 py-2 text-sm text-zinc-400 hover:text-white transition-colors bg-[#1C1D21] rounded-lg border border-zinc-800 w-full sm:w-auto justify-center">
                             <FiPlus size={16} /> Create
                         </button>
                     </div>
 
-                    <div className="relative w-48">
+                    <div className="relative w-full sm:w-48">
                         <input
                             type="text"
                             value={searchQuery}
@@ -195,11 +212,86 @@ export default function KanbanBoard({ collectionName, onAddClick }) {
                                 title={col} 
                                 docs={cards.filter(c => c.status === col && c.title.toLowerCase().includes(searchQuery.toLowerCase()))} 
                                 onAddClick={handleAddClick} 
+                                onCardClick={(doc) => navigate(doc.docType === 'canvas' ? `/app/canvas/${doc._id}` : `/app/editor/${doc._id}`)}
                             />
                         ))
                     )}
                 </div>
             </DragDropContext>
+
+            {showCreateModal && (
+                <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm">
+                    <div className="w-[30vw] min-w-[320px] rounded-2xl bg-zinc-900 border border-zinc-800 text-white p-6 shadow-2xl relative animate-in fade-in zoom-in duration-200">
+                        <button 
+                            onClick={() => setShowCreateModal(false)}
+                            className="absolute right-4 top-4 text-zinc-400 hover:text-white transition-colors"
+                        >
+                            <FiTrash2 className="hidden" /> {/* just importing X from somewhere? No, just use text or an icon */}
+                            <span className="text-xl">&times;</span>
+                        </button>
+                        
+                        <h2 className="text-xl font-bold mb-1">Create Card</h2>
+                        <p className="text-xs text-zinc-400 mb-5">Adding to: <span className="font-medium text-amber-300">{createStatus}</span></p>
+                        
+                        <form onSubmit={submitCreateCard} className="flex flex-col gap-4">
+                            <div className="flex flex-col gap-1">
+                                <label className="text-xs text-zinc-400 font-semibold uppercase tracking-wider">Title</label>
+                                <input
+                                    type="text"
+                                    value={createTitle}
+                                    onChange={(e) => setCreateTitle(e.target.value)}
+                                    placeholder="Enter card title..."
+                                    className="bg-zinc-950 border border-zinc-800 rounded-xl p-3 focus:outline-none focus:border-white text-sm"
+                                    autoFocus
+                                />
+                            </div>
+
+                            <div className="flex flex-col gap-2">
+                                <label className="text-xs text-zinc-400 font-semibold uppercase tracking-wider">Document Type</label>
+                                <div className="flex gap-4">
+                                    <label className="flex items-center gap-2 cursor-pointer">
+                                        <input 
+                                            type="radio" 
+                                            value="text" 
+                                            checked={createType === "text"} 
+                                            onChange={(e) => setCreateType(e.target.value)}
+                                            className="cursor-pointer"
+                                        />
+                                        <span className="text-sm">Text Document</span>
+                                    </label>
+                                    <label className="flex items-center gap-2 cursor-pointer">
+                                        <input 
+                                            type="radio" 
+                                            value="canvas" 
+                                            checked={createType === "canvas"} 
+                                            onChange={(e) => setCreateType(e.target.value)}
+                                            className="cursor-pointer"
+                                        />
+                                        <span className="text-sm">Infinite Canvas</span>
+                                    </label>
+                                </div>
+                            </div>
+
+                            <div className="flex justify-end gap-3 mt-4">
+                                <button
+                                    type="button"
+                                    onClick={() => setShowCreateModal(false)}
+                                    className="px-4 py-2 rounded-xl text-sm font-medium text-zinc-300 hover:text-white hover:bg-zinc-800 transition-colors"
+                                >
+                                    Cancel
+                                </button>
+                                <button
+                                    type="submit"
+                                    disabled={!createTitle.trim()}
+                                    className="px-4 py-2 rounded-xl text-sm font-bold bg-white text-zinc-950 hover:bg-zinc-200 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                                >
+                                    Create
+                                </button>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+            )}
         </div>
     );
 }

@@ -5,6 +5,7 @@ import Dashboard from './pages/Dashboard.jsx'
 import Collections from './pages/Collections.jsx'
 import CollectionOpen from './pages/CollectionOpen.jsx'
 import DocEditor from './pages/DocEditor.jsx'
+import CanvasEditor from './pages/CanvasEditor.jsx'
 import Landing from './pages/Landing/Landing.jsx'
 import Login from './pages/Login.jsx'
 import Signup from './pages/Signup.jsx'
@@ -34,6 +35,7 @@ function App() {
           <Route path="/app/collections" element={<ProtectedRoute><Collections /></ProtectedRoute>} />
           <Route path="/app/collections/:collectionName" element={<ProtectedRoute><CollectionOpen /></ProtectedRoute>} />
           <Route path="/app/editor/:docId" element={<ProtectedRoute><DocEditor /></ProtectedRoute>} />
+          <Route path="/app/canvas/:docId" element={<ProtectedRoute><CanvasEditor /></ProtectedRoute>} />
           
           {/* Prank Routes for Snooping Friends */}
           <Route path="/docs" element={<Prank />} />
