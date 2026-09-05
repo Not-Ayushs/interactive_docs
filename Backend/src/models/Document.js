@@ -31,6 +31,11 @@ const documentSchema = new mongoose.Schema(
       default: "text",
     },
 
+    canvasData: {
+      type: String,
+      default: "",
+    },
+
     tag: {
 
       tagTitle: {

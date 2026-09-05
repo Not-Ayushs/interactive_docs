@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate, useLocation } from 'react-router-dom';
-import { Tldraw } from '@tldraw/tldraw';
+import { Tldraw, createTLStore, defaultShapeUtils, getSnapshot, loadSnapshot } from '@tldraw/tldraw';
 import '@tldraw/tldraw/tldraw.css';
 import CapsuleButton from '../components/CapsuleButton.jsx';
 import { FiX, FiCheck, FiFolder } from 'react-icons/fi';
@@ -16,6 +16,7 @@ export default function CanvasEditor() {
     const [saving, setSaving] = useState(false);
     const [savedStatus, setSavedStatus] = useState('');
     const [store, setStore] = useState(null);
+    const [editor, setEditor] = useState(null);
 
     const returnCollection = location.state?.fromCollection || doc?.collectionName;
 
@@ -33,6 +34,23 @@ export default function CanvasEditor() {
             })
             .then(data => {
                 setDoc(data);
+                
+                // Initialize store with loaded data if it exists
+                const newStore = createTLStore({ shapeUtils: defaultShapeUtils });
+                if (data.canvasData) {
+                    try {
+                        const snapshot = typeof data.canvasData === 'string' 
+                            ? JSON.parse(data.canvasData) 
+                            : data.canvasData;
+                            
+                        if (Object.keys(snapshot).length > 0) {
+                            loadSnapshot(newStore, snapshot);
+                        }
+                    } catch (e) {
+                        console.error("Failed to load canvas data", e);
+                    }
+                }
+                setStore(newStore);
                 setLoading(false);
             })
             .catch(err => {
@@ -50,9 +68,17 @@ export default function CanvasEditor() {
     };
 
     const handleSave = () => {
-        if (!docId) return;
+        if (!docId || !editor) return;
         setSaving(true);
         setSavedStatus('Saving changes...');
+
+        let snapshotString = "";
+        try {
+            const snapshot = getSnapshot(editor.store);
+            snapshotString = JSON.stringify(snapshot);
+        } catch (e) {
+            console.error("Error stringifying snapshot", e);
+        }
 
         const apiBaseUrl = getApiBaseUrl();
         fetch(`${apiBaseUrl}/api/documents/${docId}`, {
@@ -61,9 +87,7 @@ export default function CanvasEditor() {
                 'Content-Type': 'application/json',
                 "Authorization": `Bearer ${localStorage.getItem('token')}`
             },
-            // For a complete implementation we would serialize the tldraw store here
-            // body: JSON.stringify({ canvasData: serializedStore })
-            body: JSON.stringify({ desc: "Canvas updated" }) 
+            body: JSON.stringify({ canvasData: snapshotString }) 
         })
             .then(res => {
                 if (!res.ok) throw new Error("Failed to save");
@@ -145,7 +169,7 @@ export default function CanvasEditor() {
 
             {/* Canvas Area */}
             <main className="flex-1 w-full relative">
-                <Tldraw />
+                <Tldraw store={store} onMount={setEditor} />
             </main>
         </div>
     );

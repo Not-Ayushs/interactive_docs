@@ -24,7 +24,8 @@ app.use(cors({
   },
   credentials: true,
 }));
-app.use(express.json());
+app.use(express.json({ limit: '50mb' }));
+app.use(express.urlencoded({ extended: true, limit: '50mb' }));
 
 app.get("/", (req, res) => {
     res.json({
@@ -178,10 +179,14 @@ app.post("/api/documents", protect, async (req, res) => {
 // PUT (update) an existing document
 app.put("/api/documents/:id", protect, async (req, res) => {
     try {
-        const { desc } = req.body;
+        const { desc, canvasData } = req.body;
+        const updateFields = {};
+        if (desc !== undefined) updateFields.desc = desc;
+        if (canvasData !== undefined) updateFields.canvasData = canvasData;
+
         const updatedDoc = await Document.findOneAndUpdate(
             { _id: req.params.id, userId: req.user._id },
-            { desc },
+            updateFields,
             { new: true }
         );
         if (!updatedDoc) return res.status(404).json({ message: "Document not found or unauthorized" });
