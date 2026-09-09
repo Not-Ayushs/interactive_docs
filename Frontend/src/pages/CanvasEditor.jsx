@@ -167,7 +167,18 @@ export default function CanvasEditor() {
 
             {/* Canvas Area */}
             <main className="flex-1 w-full relative">
-                <Tldraw snapshot={snapshot} onMount={setEditor} />
+                <Tldraw 
+                    onMount={(ed) => {
+                        if (snapshot && Object.keys(snapshot).length > 0) {
+                            try {
+                                loadSnapshot(ed.store, snapshot);
+                            } catch (e) {
+                                console.error("Error loading snapshot on mount:", e);
+                            }
+                        }
+                        setEditor(ed);
+                    }} 
+                />
             </main>
         </div>
     );
