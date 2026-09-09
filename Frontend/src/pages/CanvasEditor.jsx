@@ -1,10 +1,13 @@
 import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate, useLocation } from 'react-router-dom';
 import { Tldraw, useTLStore, defaultShapeUtils, getSnapshot } from '@tldraw/tldraw';
+import { getAssetUrls } from '@tldraw/assets/selfHosted';
 import '@tldraw/tldraw/tldraw.css';
 import CapsuleButton from '../components/CapsuleButton.jsx';
 import { FiX, FiCheck, FiFolder } from 'react-icons/fi';
 import { getApiBaseUrl } from '../utils/api.js';
+
+const assetUrls = getAssetUrls({ baseUrl: '/tldraw-assets/' });
 
 export default function CanvasEditor() {
     const { docId } = useParams();
@@ -177,8 +180,8 @@ export default function CanvasEditor() {
             </header>
 
             {/* Canvas Area */}
-            <main className="flex-1 w-full relative">
-                <Tldraw store={store} onMount={setEditor} />
+            <main style={{ height: 'calc(100vh - 64px)', width: '100%', position: 'relative' }}>
+                <Tldraw store={store} onMount={setEditor} assetUrls={assetUrls} />
             </main>
         </div>
     );
