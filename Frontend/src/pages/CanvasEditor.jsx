@@ -1,6 +1,7 @@
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate, useLocation } from 'react-router-dom';
-import { Excalidraw } from '@excalidraw/excalidraw';
+import { Tldraw, useTLStore, defaultShapeUtils, getSnapshot } from '@tldraw/tldraw';
+import '@tldraw/tldraw/tldraw.css';
 import CapsuleButton from '../components/CapsuleButton.jsx';
 import { FiX, FiCheck, FiFolder } from 'react-icons/fi';
 import { getApiBaseUrl } from '../utils/api.js';
@@ -14,8 +15,8 @@ export default function CanvasEditor() {
     const [loading, setLoading] = useState(true);
     const [saving, setSaving] = useState(false);
     const [savedStatus, setSavedStatus] = useState('');
-    const [initialData, setInitialData] = useState(null);
-    const [excalidrawAPI, setExcalidrawAPI] = useState(null);
+    const [snapshot, setSnapshot] = useState(null);
+    const [editor, setEditor] = useState(null);
 
     const returnCollection = location.state?.fromCollection || doc?.collectionName;
 
@@ -40,12 +41,13 @@ export default function CanvasEditor() {
                             ? JSON.parse(data.canvasData) 
                             : data.canvasData;
                             
+                        // Valid tldraw snapshots must be an object and typically contain 'store' and 'schema'
                         if (snap && typeof snap === 'object' && Object.keys(snap).length > 0) {
-                            if (snap.elements) {
-                                setInitialData(snap);
+                            if (snap.store && snap.schema) {
+                                setSnapshot(snap);
                             } else {
-                                console.warn("Canvas data is empty or corrupted. Starting fresh.");
-                                setInitialData(null);
+                                console.warn("Canvas snapshot is corrupted or invalid. Starting fresh.");
+                                setSnapshot(null);
                             }
                         }
                     } catch (e) {
@@ -60,6 +62,12 @@ export default function CanvasEditor() {
             });
     }, [docId]);
 
+    // useTLStore cleanly handles initialization, history bindings, and snapshots!
+    const store = useTLStore({
+        shapeUtils: defaultShapeUtils,
+        snapshot: snapshot || undefined
+    });
+
     const handleClose = () => {
         if (returnCollection && returnCollection !== 'General') {
             navigate(`/app/collections/${encodeURIComponent(returnCollection)}`);
@@ -69,16 +77,14 @@ export default function CanvasEditor() {
     };
 
     const handleSave = () => {
-        if (!docId || !excalidrawAPI) return;
+        if (!docId || !editor) return;
         setSaving(true);
         setSavedStatus('Saving changes...');
 
         let snapshotString = "";
         try {
-            const elements = excalidrawAPI.getSceneElements();
-            const appState = excalidrawAPI.getAppState();
-            const files = excalidrawAPI.getFiles();
-            snapshotString = JSON.stringify({ elements, appState, files });
+            const currentSnapshot = getSnapshot(editor.store);
+            snapshotString = JSON.stringify(currentSnapshot);
         } catch (e) {
             console.error("Error stringifying snapshot", e);
         }
@@ -172,11 +178,7 @@ export default function CanvasEditor() {
 
             {/* Canvas Area */}
             <main className="flex-1 w-full relative">
-                <Excalidraw 
-                    theme="dark"
-                    initialData={initialData}
-                    excalidrawAPI={(api) => setExcalidrawAPI(api)}
-                />
+                <Tldraw store={store} onMount={setEditor} />
             </main>
         </div>
     );
