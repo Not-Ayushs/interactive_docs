@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate, useLocation } from 'react-router-dom';
-import { Tldraw, createTLStore, defaultShapeUtils, getSnapshot, loadSnapshot } from '@tldraw/tldraw';
+import { Tldraw, useTLStore, defaultShapeUtils, getSnapshot } from '@tldraw/tldraw';
 import '@tldraw/tldraw/tldraw.css';
 import CapsuleButton from '../components/CapsuleButton.jsx';
 import { FiX, FiCheck, FiFolder } from 'react-icons/fi';
@@ -19,7 +19,6 @@ export default function CanvasEditor() {
     const [editor, setEditor] = useState(null);
 
     const returnCollection = location.state?.fromCollection || doc?.collectionName;
-
 
     useEffect(() => {
         const apiBaseUrl = getApiBaseUrl();
@@ -57,6 +56,12 @@ export default function CanvasEditor() {
             });
     }, [docId]);
 
+    // useTLStore cleanly handles initialization, history bindings, and snapshots!
+    const store = useTLStore({
+        shapeUtils: defaultShapeUtils,
+        snapshot: snapshot || undefined
+    });
+
     const handleClose = () => {
         if (returnCollection && returnCollection !== 'General') {
             navigate(`/app/collections/${encodeURIComponent(returnCollection)}`);
@@ -72,8 +77,8 @@ export default function CanvasEditor() {
 
         let snapshotString = "";
         try {
-            const snapshot = getSnapshot(editor.store);
-            snapshotString = JSON.stringify(snapshot);
+            const currentSnapshot = getSnapshot(editor.store);
+            snapshotString = JSON.stringify(currentSnapshot);
         } catch (e) {
             console.error("Error stringifying snapshot", e);
         }
@@ -167,18 +172,7 @@ export default function CanvasEditor() {
 
             {/* Canvas Area */}
             <main className="flex-1 w-full relative">
-                <Tldraw 
-                    onMount={(ed) => {
-                        if (snapshot && Object.keys(snapshot).length > 0) {
-                            try {
-                                loadSnapshot(ed.store, snapshot);
-                            } catch (e) {
-                                console.error("Error loading snapshot on mount:", e);
-                            }
-                        }
-                        setEditor(ed);
-                    }} 
-                />
+                <Tldraw store={store} onMount={setEditor} />
             </main>
         </div>
     );
