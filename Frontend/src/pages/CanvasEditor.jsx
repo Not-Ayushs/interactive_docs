@@ -15,10 +15,11 @@ export default function CanvasEditor() {
     const [loading, setLoading] = useState(true);
     const [saving, setSaving] = useState(false);
     const [savedStatus, setSavedStatus] = useState('');
-    const [store, setStore] = useState(null);
+    const [snapshot, setSnapshot] = useState(null);
     const [editor, setEditor] = useState(null);
 
     const returnCollection = location.state?.fromCollection || doc?.collectionName;
+
 
     useEffect(() => {
         const apiBaseUrl = getApiBaseUrl();
@@ -35,22 +36,19 @@ export default function CanvasEditor() {
             .then(data => {
                 setDoc(data);
                 
-                // Initialize store with loaded data if it exists
-                const newStore = createTLStore({ shapeUtils: defaultShapeUtils });
                 if (data.canvasData) {
                     try {
-                        const snapshot = typeof data.canvasData === 'string' 
+                        const snap = typeof data.canvasData === 'string' 
                             ? JSON.parse(data.canvasData) 
                             : data.canvasData;
                             
-                        if (Object.keys(snapshot).length > 0) {
-                            loadSnapshot(newStore, snapshot);
+                        if (Object.keys(snap).length > 0) {
+                            setSnapshot(snap);
                         }
                     } catch (e) {
                         console.error("Failed to load canvas data", e);
                     }
                 }
-                setStore(newStore);
                 setLoading(false);
             })
             .catch(err => {
@@ -169,7 +167,7 @@ export default function CanvasEditor() {
 
             {/* Canvas Area */}
             <main className="flex-1 w-full relative">
-                <Tldraw store={store} onMount={setEditor} />
+                <Tldraw snapshot={snapshot} onMount={setEditor} />
             </main>
         </div>
     );
