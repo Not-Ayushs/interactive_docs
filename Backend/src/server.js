@@ -106,8 +106,26 @@ app.get("/api/documents", protect, async (req, res) => {
 // GET a single document by ID
 app.get("/api/documents/:id", protect, async (req, res) => {
     try {
-        const doc = await Document.findOne({ _id: req.params.id, userId: req.user._id });
-        if (!doc) return res.status(404).json({ message: "Document not found or unauthorized" });
+        let doc = await Document.findOne({ _id: req.params.id, userId: req.user._id });
+        
+        // Auto-fix for old Kanban cards that don't have a linked Document yet
+        if (!doc) {
+            const card = await KanbanCard.findOne({ _id: req.params.id, userId: req.user._id });
+            if (card) {
+                // Create the missing document
+                doc = await Document.create({
+                    _id: card._id,
+                    userId: req.user._id,
+                    title: card.title,
+                    desc: card.desc,
+                    collectionName: card.collectionName || "General",
+                    docType: card.docType || "text"
+                });
+            } else {
+                return res.status(404).json({ message: "Document not found or unauthorized" });
+            }
+        }
+        
         res.json(doc);
     } catch (error) {
         res.status(500).json({ message: error.message });
