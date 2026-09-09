@@ -41,8 +41,14 @@ export default function CanvasEditor() {
                             ? JSON.parse(data.canvasData) 
                             : data.canvasData;
                             
-                        if (Object.keys(snap).length > 0) {
-                            setSnapshot(snap);
+                        // Valid tldraw snapshots must be an object and typically contain 'store' and 'schema'
+                        if (snap && typeof snap === 'object' && Object.keys(snap).length > 0) {
+                            if (snap.store && snap.schema) {
+                                setSnapshot(snap);
+                            } else {
+                                console.warn("Canvas snapshot is corrupted or invalid. Starting fresh.");
+                                setSnapshot(null);
+                            }
                         }
                     } catch (e) {
                         console.error("Failed to load canvas data", e);
