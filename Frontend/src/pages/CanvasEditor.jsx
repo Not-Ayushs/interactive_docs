@@ -3,6 +3,7 @@ import { useParams, useNavigate, useLocation } from 'react-router-dom';
 import { Tldraw, useTLStore, defaultShapeUtils, getSnapshot } from '@tldraw/tldraw';
 import '@tldraw/tldraw/tldraw.css';
 import CapsuleButton from '../components/CapsuleButton.jsx';
+import { ErrorBoundary } from '../components/ErrorBoundary.jsx';
 import { FiX, FiCheck, FiFolder } from 'react-icons/fi';
 import { getApiBaseUrl } from '../utils/api.js';
 
@@ -178,7 +179,9 @@ export default function CanvasEditor() {
 
             {/* Canvas Area */}
             <main className="flex-1 w-full relative">
-                <Tldraw store={store} onMount={setEditor} />
+                <ErrorBoundary>
+                    <Tldraw store={store} onMount={setEditor} />
+                </ErrorBoundary>
             </main>
         </div>
     );
