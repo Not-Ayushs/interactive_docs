@@ -17,8 +17,6 @@
     "@tiptap/pm": "^3.30.0",
     "@tiptap/react": "^3.30.0",
     "@tiptap/starter-kit": "^3.30.0",
-    "@tldraw/assets": "^5.4.1",
-    "@tldraw/tldraw": "^5.4.1",
     "@vitejs/plugin-react": "^6.0.4",
     "cors": "^2.8.6",
     "dotenv": "^17.4.2",
