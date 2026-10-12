@@ -1,10 +1,27 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { FiSearch, FiPlus, FiDownload, FiTrash2 } from 'react-icons/fi';
+import { FiSearch, FiPlus, FiDownload, FiTrash2, FiShare2, FiUsers } from 'react-icons/fi';
+import { FaCrown } from 'react-icons/fa';
 import { DragDropContext, Droppable, Draggable } from '@hello-pangea/dnd';
 import { getApiBaseUrl } from '../utils/api.js';
+import { getSocket } from '../utils/socket.js';
+import ShareModal from './ShareModal.jsx';
 
 const apiBaseUrl = getApiBaseUrl();
+
+const stripHtml = (html, docType) => {
+    if (!html) {
+        return docType === 'canvas' ? 'Interactive Canvas Project' : 'No description.';
+    }
+    try {
+        const parsed = new DOMParser().parseFromString(html, "text/html");
+        const text = (parsed.body.textContent || "").replace(/\s+/g, " ").trim();
+        return text || (docType === 'canvas' ? 'Interactive Canvas Project' : 'No description.');
+    } catch {
+        const cleaned = html.replace(/<[^>]*>/g, " ").replace(/\s+/g, " ").trim();
+        return cleaned || (docType === 'canvas' ? 'Interactive Canvas Project' : 'No description.');
+    }
+};
 
 const KanbanColumn = ({ title, docs, onCardClick, onAddClick }) => {
     return (
@@ -17,26 +34,43 @@ const KanbanColumn = ({ title, docs, onCardClick, onAddClick }) => {
                         ref={provided.innerRef}
                         className="flex flex-col gap-4 flex-1 min-h-[150px] bg-[#1C1D21]/50 p-2 rounded-xl"
                     >
-                        {docs.map((doc, idx) => (
-                            <Draggable key={doc._id} draggableId={doc._id} index={idx}>
-                                {(provided) => (
-                                    <div 
-                                        ref={provided.innerRef}
-                                        {...provided.draggableProps}
-                                        {...provided.dragHandleProps}
-                                        onClick={() => onCardClick && onCardClick(doc)}
-                                        className="bg-[#1C1D21] border border-zinc-800 rounded-xl p-5 hover:border-zinc-600 transition-colors cursor-pointer group"
-                                    >
-                                        <div className="flex justify-between items-start mb-3">
-                                            <h3 className="text-white font-semibold">{doc.title || `Card`}</h3>
+                        {docs.map((doc, idx) => {
+                            const isCollab = doc.isCollaborative || (doc.collaborators && doc.collaborators.length > 0);
+                            const ownerName = doc.userId?.name || 'Owner';
+                            return (
+                                <Draggable key={doc._id} draggableId={doc._id} index={idx}>
+                                    {(provided) => (
+                                        <div 
+                                            ref={provided.innerRef}
+                                            {...provided.draggableProps}
+                                            {...provided.dragHandleProps}
+                                            onClick={() => onCardClick && onCardClick(doc)}
+                                            className="bg-[#1C1D21] border border-zinc-800 rounded-xl p-5 hover:border-zinc-600 transition-colors cursor-pointer group"
+                                        >
+                                            <div className="flex justify-between items-start mb-2">
+                                                <h3 className="text-white font-semibold flex-1 pr-2">{doc.title || `Card`}</h3>
+                                                {isCollab && (
+                                                    <span className="flex items-center gap-1 text-[9px] bg-indigo-500/20 text-indigo-300 border border-indigo-500/30 px-2 py-0.5 rounded-full font-semibold shrink-0">
+                                                        <FiUsers size={10} /> Collab
+                                                    </span>
+                                                )}
+                                            </div>
+                                            <p className="text-zinc-400 text-xs leading-relaxed line-clamp-3 mb-3">
+                                                {stripHtml(doc.desc, doc.docType)}
+                                            </p>
+                                            <div className="flex items-center justify-between pt-2 border-t border-zinc-800/60 text-[10px] text-zinc-500">
+                                                <span className="capitalize">{doc.docType || 'text'}</span>
+                                                {isCollab && (
+                                                    <span className="text-amber-300 font-medium flex items-center gap-1">
+                                                        <FaCrown size={9} /> {ownerName}
+                                                    </span>
+                                                )}
+                                            </div>
                                         </div>
-                                        <p className="text-zinc-400 text-xs leading-relaxed line-clamp-4">
-                                            {doc.desc || "No description."}
-                                        </p>
-                                    </div>
-                                )}
-                            </Draggable>
-                        ))}
+                                    )}
+                                </Draggable>
+                            );
+                        })}
                         {provided.placeholder}
                         
                         <div className="mt-2 flex gap-2">
@@ -79,7 +113,22 @@ export default function KanbanBoard({ collectionName, onAddClick }) {
         fetchCards();
     }, [collectionName]);
 
+    // Real-time socket sync on shares
+    useEffect(() => {
+        const socket = getSocket();
+        const handleRefresh = () => {
+            fetchCards();
+        };
+        socket.on("collection-shared", handleRefresh);
+        socket.on("document-shared", handleRefresh);
+        return () => {
+            socket.off("collection-shared", handleRefresh);
+            socket.off("document-shared", handleRefresh);
+        };
+    }, [collectionName]);
+
     const [showCreateModal, setShowCreateModal] = useState(false);
+    const [showShareModal, setShowShareModal] = useState(false);
     const [createStatus, setCreateStatus] = useState('');
     const [createTitle, setCreateTitle] = useState('');
     const [createType, setCreateType] = useState('text');
@@ -182,8 +231,11 @@ export default function KanbanBoard({ collectionName, onAddClick }) {
 
                 <div className="flex flex-col sm:flex-row items-start sm:items-center gap-4 mt-4 sm:mt-0 w-full sm:w-auto">
                     <div className="flex gap-2 w-full sm:w-auto">
-                        <button onClick={() => handleAddClick('User story')} className="flex items-center gap-2 px-3 py-2 text-sm text-zinc-400 hover:text-white transition-colors bg-[#1C1D21] rounded-lg border border-zinc-800 w-full sm:w-auto justify-center">
+                        <button onClick={() => handleAddClick('User story')} className="flex items-center gap-2 px-3 py-2 text-sm text-zinc-400 hover:text-white transition-colors bg-[#1C1D21] rounded-lg border border-zinc-800 w-full sm:w-auto justify-center cursor-pointer">
                             <FiPlus size={16} /> Create
+                        </button>
+                        <button onClick={() => setShowShareModal(true)} className="flex items-center gap-2 px-3 py-2 text-sm text-indigo-400 hover:text-indigo-300 transition-colors bg-indigo-500/10 hover:bg-indigo-500/20 rounded-lg border border-indigo-500/30 w-full sm:w-auto justify-center cursor-pointer">
+                            <FiShare2 size={15} /> Share Collection
                         </button>
                     </div>
 
@@ -292,6 +344,14 @@ export default function KanbanBoard({ collectionName, onAddClick }) {
                     </div>
                 </div>
             )}
+
+            {/* Share Collection Modal */}
+            <ShareModal
+                isOpen={showShareModal}
+                onClose={() => setShowShareModal(false)}
+                collectionName={collectionName}
+                onUpdate={() => fetchCards()}
+            />
         </div>
     );
 }

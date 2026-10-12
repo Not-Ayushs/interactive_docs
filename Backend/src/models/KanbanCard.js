@@ -32,7 +32,33 @@ const kanbanCardSchema = new mongoose.Schema(
     order: {
       type: Number,
       default: 0,
-    }
+    },
+    collaborators: [
+      {
+        user: {
+          type: mongoose.Schema.Types.ObjectId,
+          ref: "User",
+        },
+        email: {
+          type: String,
+          lowercase: true,
+          trim: true,
+        },
+        name: {
+          type: String,
+          default: "",
+        },
+        role: {
+          type: String,
+          default: "editor",
+          enum: ["editor", "viewer"],
+        },
+      },
+    ],
+    isCollaborative: {
+      type: Boolean,
+      default: false,
+    },
   },
   { timestamps: true }
 );

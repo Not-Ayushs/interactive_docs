@@ -11,9 +11,56 @@
   color: rgb(226, 150, 69);
 }
 
+html {
+  color-scheme: dark;
+}
+
 body {
   background-color: #171717;
+  color: #ffffff;
+}
 
+/* Sleek Dark Themed Scrollbars for WebKit (Chrome, Edge, Safari, Opera) */
+::-webkit-scrollbar {
+  width: 8px;
+  height: 7px;
+}
+
+::-webkit-scrollbar-track {
+  background: #0f1015;
+  border-radius: 9999px;
+}
+
+::-webkit-scrollbar-thumb {
+  background: #2a2d3d;
+  border-radius: 9999px;
+  border: 1px solid #181922;
+  transition: background 0.2s ease;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: #464a60;
+}
+
+::-webkit-scrollbar-thumb:active {
+  background: #6366f1;
+}
+
+::-webkit-scrollbar-corner {
+  background: transparent;
+}
+
+/* Hide ugly default Windows scrollbar arrow buttons */
+::-webkit-scrollbar-button {
+  display: none;
+  width: 0;
+  height: 0;
+}
+
+/* Firefox scrollbar support */
+* {
+  scrollbar-width: thin;
+  scrollbar-color: #2a2d3d #0f1015;
 }
 
 

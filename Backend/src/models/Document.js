@@ -37,16 +37,44 @@ const documentSchema = new mongoose.Schema(
     },
 
     tag: {
-
       tagTitle: {
         type: String,
         default: "",
       },
-
       tagColor: {
         type: String,
         default: "",
       },
+    },
+    collaborators: [
+      {
+        user: {
+          type: mongoose.Schema.Types.ObjectId,
+          ref: "User",
+        },
+        email: {
+          type: String,
+          lowercase: true,
+          trim: true,
+        },
+        name: {
+          type: String,
+          default: "",
+        },
+        role: {
+          type: String,
+          default: "editor",
+          enum: ["editor", "viewer"],
+        },
+        addedAt: {
+          type: Date,
+          default: Date.now,
+        },
+      },
+    ],
+    isCollaborative: {
+      type: Boolean,
+      default: false,
     },
   },
   {

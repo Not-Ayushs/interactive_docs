@@ -3,7 +3,8 @@ import { useNavigate } from 'react-router-dom';
 import AppNavbar from '../components/AppNavbar.jsx';
 import Background from '../components/Background.jsx';
 import CapsuleButton from '../components/CapsuleButton.jsx';
-import { FiPlus, FiFolder, FiX, FiMoreVertical, FiEdit2, FiTrash2, FiDownload } from 'react-icons/fi';
+import ShareModal from '../components/ShareModal.jsx';
+import { FiPlus, FiFolder, FiX, FiMoreVertical, FiEdit2, FiTrash2, FiDownload, FiShare2 } from 'react-icons/fi';
 import { getApiBaseUrl } from '../utils/api.js';
 
 const INITIAL_COLLECTIONS = [
@@ -25,6 +26,8 @@ export default function Collections() {
     const [collectionTitle, setCollectionTitle] = useState('');
     const [error, setError] = useState('');
     const [activeMenuId, setActiveMenuId] = useState(null);
+    const [showShareModal, setShowShareModal] = useState(false);
+    const [shareColName, setShareColName] = useState('');
 
     useEffect(() => {
         const saved = localStorage.getItem('DOCS_COLLECTIONS');
@@ -273,6 +276,20 @@ export default function Collections() {
                                                     onClick={(e) => {
                                                         e.stopPropagation();
                                                         setActiveMenuId(null);
+                                                        setShareColName(col.title);
+                                                        setShowShareModal(true);
+                                                    }}
+                                                    className="w-full flex items-center gap-2.5 px-4 py-2 text-xs font-medium text-indigo-400 hover:bg-indigo-500/20 hover:text-indigo-300 transition-colors"
+                                                >
+                                                    <FiShare2 className="text-sm" />
+                                                    <span>Share</span>
+                                                </button>
+
+                                                <button
+                                                    type="button"
+                                                    onClick={(e) => {
+                                                        e.stopPropagation();
+                                                        setActiveMenuId(null);
                                                         handleOpenRenameModal(col);
                                                     }}
                                                     className="w-full flex items-center gap-2.5 px-4 py-2 text-xs font-medium text-zinc-200 hover:bg-zinc-800 hover:text-white transition-colors"
@@ -383,6 +400,13 @@ export default function Collections() {
                     </div>
                 </div>
             )}
+
+            {/* Share Collection Modal */}
+            <ShareModal
+                isOpen={showShareModal}
+                onClose={() => setShowShareModal(false)}
+                collectionName={shareColName}
+            />
         </div>
     );
 }

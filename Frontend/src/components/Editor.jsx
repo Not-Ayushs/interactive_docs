@@ -1,3 +1,4 @@
+import React, { useEffect } from 'react';
 import { useEditor, EditorContent } from '@tiptap/react'
 import { FloatingMenu, BubbleMenu } from '@tiptap/react/menus'
 
@@ -69,14 +70,23 @@ const Editor = ({title, onChange}) => {
                 class: "focus:outline-none print:border-0 bg-transparent flex flex-col cursor-text pt-2 pr-7 pb-7 pl-7 w-full min-h-[300px] text-white"
             },
         },
-        extensions: [StarterKit, TaskList,TaskItem.configure({nested: true,}),], // define your extension array
-        content: title || "", // initial content
+        extensions: [StarterKit, TaskList,TaskItem.configure({nested: true,}),],
+        content: title || "",
         onUpdate: ({ editor }) => {
             if (onChange) {
                 onChange(editor.getHTML());
             }
         }
-    })
+    });
+
+    useEffect(() => {
+        if (editor && title !== undefined) {
+            const currentHTML = editor.getHTML();
+            if (currentHTML !== title) {
+                editor.commands.setContent(title, false);
+            }
+        }
+    }, [title, editor]);
 
     return (
         <div className="w-full flex flex-col bg-zinc-900 rounded-xl border border-zinc-800/80">

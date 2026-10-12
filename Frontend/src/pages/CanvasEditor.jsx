@@ -1,8 +1,11 @@
 import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { useParams, useNavigate, useLocation } from 'react-router-dom';
 import CapsuleButton from '../components/CapsuleButton.jsx';
-import { FiX, FiCheck, FiFolder, FiEdit2, FiMove, FiTrash2, FiSquare, FiCircle, FiType } from 'react-icons/fi';
+import ShareModal from '../components/ShareModal.jsx';
+import CollaboratorsBar from '../components/CollaboratorsBar.jsx';
+import { FiX, FiCheck, FiFolder, FiEdit2, FiMove, FiTrash2, FiSquare, FiCircle, FiType, FiCornerDownLeft } from 'react-icons/fi';
 import { getApiBaseUrl } from '../utils/api.js';
+import { getSocket, joinDocumentRoom, leaveDocumentRoom, emitCanvasChange, emitCanvasCursor } from '../utils/socket.js';
 
 const PRESET_COLORS = ['#ffffff', '#ff4d4d', '#4dff4d', '#4d4dff', '#ffff4d'];
 
@@ -14,16 +17,24 @@ export default function CanvasEditor() {
     const canvasRef = useRef(null);
     const gridCanvasRef = useRef(null);
     const containerRef = useRef(null);
+    const textInputRef = useRef(null);
 
     const [doc, setDoc] = useState(null);
     const [loading, setLoading] = useState(true);
     const [saving, setSaving] = useState(false);
     const [savedStatus, setSavedStatus] = useState('');
+    const [activeUsers, setActiveUsers] = useState([]);
+    const [remoteCursors, setRemoteCursors] = useState({});
+    const [showShareModal, setShowShareModal] = useState(false);
+
+    const isRemoteCanvasUpdateRef = useRef(false);
+    const hasLoadedInitialRef = useRef(false);
+    const lastCursorEmitRef = useRef(0);
 
     // --- Canvas State ---
     const [elements, setElements] = useState([]);
     const [camera, setCamera] = useState({ x: 0, y: 0, zoom: 1 });
-    const [tool, setTool] = useState('pen'); // 'pen', 'pan', 'eraser', 'rectangle', 'circle', 'text'
+    const [tool, setTool] = useState('pen'); // 'pen', 'rectangle', 'circle', 'text', 'eraser', 'pan'
     const [color, setColor] = useState('#ffffff');
     const [strokeWidth, setStrokeWidth] = useState(5);
 
@@ -31,13 +42,13 @@ export default function CanvasEditor() {
     const [isDrawing, setIsDrawing] = useState(false);
     const [isPanning, setIsPanning] = useState(false);
     const [lastPointerPosition, setLastPointerPosition] = useState(null);
-    
-    // Text overlay state
-    const [textInput, setTextInput] = useState(null); // { x, y, canvasX, canvasY, value }
+
+    // Text Dialog State: { canvasX, canvasY, value }
+    const [textDialog, setTextDialog] = useState(null);
 
     const returnCollection = location.state?.fromCollection || doc?.collectionName;
 
-    // Fetch document and load canvas data
+    // Load Document
     useEffect(() => {
         const apiBaseUrl = getApiBaseUrl();
         const token = localStorage.getItem('token');
@@ -56,21 +67,16 @@ export default function CanvasEditor() {
                             ? JSON.parse(data.canvasData)
                             : data.canvasData;
                         
-                        // Support migrating 'lines' to 'elements' format if needed
                         let loadedElements = [];
                         if (Array.isArray(parsed.elements)) {
                             loadedElements = parsed.elements;
                         } else if (Array.isArray(parsed.lines)) {
-                            loadedElements = parsed.lines.map(line => ({ ...line, type: 'path' }));
+                            loadedElements = parsed.lines.map(line => ({ ...line, type: 'path', id: Date.now() + Math.random() }));
                         }
                         
                         if (loadedElements.length > 0) {
-                            setElements(loadedElements);
+                            setElements(loadedElements.map(el => ({ ...el, id: el.id || Date.now() + Math.random() })));
                             if (parsed.camera) setCamera(parsed.camera);
-                        } else if (parsed.lines) {
-                             console.warn("Empty lines array found.");
-                        } else {
-                            console.warn("Canvas data is not in expected custom format. Starting fresh.");
                         }
                     } catch (e) {
                         console.error("Failed to load canvas data", e);
@@ -78,12 +84,70 @@ export default function CanvasEditor() {
                     }
                 }
                 setLoading(false);
+                setTimeout(() => {
+                    hasLoadedInitialRef.current = true;
+                }, 300);
             })
             .catch(err => {
                 console.error("Error fetching document:", err);
                 setLoading(false);
             });
     }, [docId]);
+
+    // WebSocket Real-Time Sync
+    useEffect(() => {
+        if (!docId) return;
+
+        joinDocumentRoom(docId);
+        const socket = getSocket();
+
+        const handleCanvasChanged = (data) => {
+            if (data && data.elements) {
+                isRemoteCanvasUpdateRef.current = true;
+                setElements(data.elements);
+                const editorName = data.updatedBy?.name || 'Partner';
+                setSavedStatus(`Edited in real-time by ${editorName}`);
+                setTimeout(() => setSavedStatus('All changes synced'), 2000);
+            }
+        };
+
+        const handleActiveUsers = (users) => {
+            if (Array.isArray(users)) {
+                setActiveUsers(users);
+            }
+        };
+
+        const handleCursorMoved = (cursor) => {
+            if (cursor && cursor.userId) {
+                setRemoteCursors(prev => ({
+                    ...prev,
+                    [cursor.userId]: cursor
+                }));
+            }
+        };
+
+        socket.on("canvas-changed", handleCanvasChanged);
+        socket.on("active-users", handleActiveUsers);
+        socket.on("canvas-cursor-moved", handleCursorMoved);
+
+        return () => {
+            socket.off("canvas-changed", handleCanvasChanged);
+            socket.off("active-users", handleActiveUsers);
+            socket.off("canvas-cursor-moved", handleCursorMoved);
+            leaveDocumentRoom(docId);
+        };
+    }, [docId]);
+
+    // Emit canvas changes when modified locally
+    useEffect(() => {
+        if (!hasLoadedInitialRef.current || isRemoteCanvasUpdateRef.current) {
+            isRemoteCanvasUpdateRef.current = false;
+            return;
+        }
+        emitCanvasChange(docId, elements, camera);
+        setSavedStatus('Syncing canvas live...');
+        setTimeout(() => setSavedStatus('All changes synced'), 2000);
+    }, [elements]);
 
     const handleClose = () => {
         if (returnCollection && returnCollection !== 'General') {
@@ -98,11 +162,7 @@ export default function CanvasEditor() {
         setSaving(true);
         setSavedStatus('Saving changes...');
 
-        const canvasDataToSave = {
-            elements,
-            camera
-        };
-
+        const canvasDataToSave = { elements, camera };
         const apiBaseUrl = getApiBaseUrl();
         fetch(`${apiBaseUrl}/api/documents/${docId}`, {
             method: 'PUT',
@@ -129,6 +189,38 @@ export default function CanvasEditor() {
             });
     };
 
+    // Helper: Bounding Box
+    const getElementBounds = (element) => {
+        if (element.type === 'path') {
+            if (!element.points || element.points.length === 0) return null;
+            let minX = Infinity, minY = Infinity, maxX = -Infinity, maxY = -Infinity;
+            element.points.forEach(p => {
+                if (p.x < minX) minX = p.x;
+                if (p.y < minY) minY = p.y;
+                if (p.x > maxX) maxX = p.x;
+                if (p.y > maxY) maxY = p.y;
+            });
+            return { minX, minY, maxX, maxY };
+        } else if (element.type === 'rectangle' || element.type === 'circle') {
+            const minX = Math.min(element.x, element.x + element.w);
+            const maxX = Math.max(element.x, element.x + element.w);
+            const minY = Math.min(element.y, element.y + element.h);
+            const maxY = Math.max(element.y, element.y + element.h);
+            return { minX, minY, maxX, maxY };
+        } else if (element.type === 'text') {
+            const fontSize = Math.max(16, (element.width || 5) * 3);
+            const textWidth = Math.max(24, (element.text?.length || 1) * fontSize * 0.65);
+            return { minX: element.x, minY: element.y, maxX: element.x + textWidth, maxY: element.y + fontSize + 6 };
+        }
+        return null;
+    };
+
+    const isPointInBounds = (pos, bounds, pad = 12) => {
+        if (!bounds) return false;
+        return pos.x >= bounds.minX - pad && pos.x <= bounds.maxX + pad &&
+               pos.y >= bounds.minY - pad && pos.y <= bounds.maxY + pad;
+    };
+
     // Rendering Engine - Grid
     const renderGrid = useCallback(() => {
         const canvas = gridCanvasRef.current;
@@ -137,7 +229,6 @@ export default function CanvasEditor() {
         if (!ctx) return;
 
         ctx.setTransform(1, 0, 0, 1, 0, 0);
-        
         ctx.fillStyle = '#0F131A';
         ctx.fillRect(0, 0, canvas.width, canvas.height);
 
@@ -178,9 +269,9 @@ export default function CanvasEditor() {
 
         elements.forEach(element => {
             ctx.beginPath();
-            ctx.strokeStyle = element.color;
-            ctx.fillStyle = element.color;
-            ctx.lineWidth = element.width;
+            ctx.strokeStyle = element.color || '#ffffff';
+            ctx.fillStyle = element.color || '#ffffff';
+            ctx.lineWidth = element.width || 5;
             
             if (element.tool === 'eraser') {
                 ctx.globalCompositeOperation = 'destination-out';
@@ -211,9 +302,10 @@ export default function CanvasEditor() {
                 ctx.ellipse(cx, cy, rx, ry, 0, 0, Math.PI * 2);
                 ctx.stroke();
             } else if (element.type === 'text') {
-                ctx.font = `${Math.max(16, element.width * 3)}px sans-serif`;
+                const fontSize = Math.max(16, (element.width || 5) * 3);
+                ctx.font = `600 ${fontSize}px sans-serif`;
                 ctx.textBaseline = 'top';
-                ctx.fillText(element.text, element.x, element.y);
+                ctx.fillText(element.text || '', element.x, element.y);
             }
         });
 
@@ -225,33 +317,61 @@ export default function CanvasEditor() {
         renderCanvas();
     }, [renderGrid, renderCanvas]);
 
+    // Canvas Size Setup on Mount & Resize
     useEffect(() => {
-        const handleResize = () => {
+        if (loading) return;
+
+        const updateSize = () => {
             if (canvasRef.current && gridCanvasRef.current && containerRef.current) {
                 const rect = containerRef.current.getBoundingClientRect();
-                
-                canvasRef.current.width = rect.width;
-                canvasRef.current.height = rect.height;
-                
-                gridCanvasRef.current.width = rect.width;
-                gridCanvasRef.current.height = rect.height;
-                
-                renderGrid();
-                renderCanvas();
+                if (rect.width > 0 && rect.height > 0) {
+                    canvasRef.current.width = rect.width;
+                    canvasRef.current.height = rect.height;
+                    gridCanvasRef.current.width = rect.width;
+                    gridCanvasRef.current.height = rect.height;
+                    renderGrid();
+                    renderCanvas();
+                }
             }
         };
 
-        handleResize();
-        window.addEventListener('resize', handleResize);
-        return () => window.removeEventListener('resize', handleResize);
-    }, [renderCanvas, renderGrid]);
+        updateSize();
+        requestAnimationFrame(updateSize);
+
+        const resizeObserver = new ResizeObserver(() => {
+            updateSize();
+        });
+
+        if (containerRef.current) {
+            resizeObserver.observe(containerRef.current);
+        }
+
+        window.addEventListener('resize', updateSize);
+        return () => {
+            resizeObserver.disconnect();
+            window.removeEventListener('resize', updateSize);
+        };
+    }, [loading, renderCanvas, renderGrid]);
 
     const getPointerPos = (e) => {
         const canvas = canvasRef.current;
+        if (!canvas) return { x: 0, y: 0 };
         const rect = canvas.getBoundingClientRect();
+        
+        let clientX = e.clientX;
+        let clientY = e.clientY;
+
+        if (e.touches && e.touches.length > 0) {
+            clientX = e.touches[0].clientX;
+            clientY = e.touches[0].clientY;
+        } else if (e.changedTouches && e.changedTouches.length > 0) {
+            clientX = e.changedTouches[0].clientX;
+            clientY = e.changedTouches[0].clientY;
+        }
+
         return {
-            x: e.clientX - rect.left,
-            y: e.clientY - rect.top
+            x: (clientX !== undefined ? clientX : 0) - rect.left,
+            y: (clientY !== undefined ? clientY : 0) - rect.top
         };
     };
 
@@ -262,51 +382,131 @@ export default function CanvasEditor() {
         };
     };
 
+    // Text Submission
+    const handleAddText = (textValue) => {
+        if (!textDialog) return;
+        const val = (textValue !== undefined ? textValue : textDialog.value || '').trim();
+        if (val) {
+            setElements(prev => [
+                ...prev,
+                {
+                    id: Date.now() + Math.random(),
+                    type: 'text',
+                    tool: 'text',
+                    color: color,
+                    width: strokeWidth,
+                    x: textDialog.canvasX,
+                    y: textDialog.canvasY,
+                    text: val
+                }
+            ]);
+        }
+        setTextDialog(null);
+    };
+
+    // Double-click to edit existing text
+    const handleDoubleClick = (e) => {
+        const pos = getPointerPos(e);
+        const canvasPos = getCanvasPos(pos);
+
+        const clickedText = elements.find(el => {
+            if (el.type === 'text') {
+                const bounds = getElementBounds(el);
+                return isPointInBounds(canvasPos, bounds, 20);
+            }
+            return false;
+        });
+
+        if (clickedText) {
+            setTool('text');
+            setElements(prev => prev.filter(el => el.id !== clickedText.id));
+            setTextDialog({
+                canvasX: clickedText.x,
+                canvasY: clickedText.y,
+                value: clickedText.text || ''
+            });
+        }
+    };
+
+    // Pointer / Mouse / Touch Events
     const handlePointerDown = (e) => {
         if (!canvasRef.current) return;
-        
-        // If there's an active text input and we click elsewhere, commit it
-        if (textInput && tool !== 'text') {
-            commitText();
-            return;
-        }
 
-        e.target.setPointerCapture(e.pointerId);
-        
         const pos = getPointerPos(e);
+        const canvasPos = getCanvasPos(pos);
 
+        // Middle mouse, Space, or Pan tool
         if (e.button === 1 || tool === 'pan' || e.shiftKey) {
+            if (e.target.setPointerCapture && e.pointerId !== undefined) {
+                try { e.target.setPointerCapture(e.pointerId); } catch {}
+            }
             setIsPanning(true);
             setLastPointerPosition(pos);
             return;
         }
 
-        if (e.button === 0) {
+        if (e.button === 0 || e.button === undefined) {
+            // Text tool
             if (tool === 'text') {
-                // If we already have a text input open, commit it first
-                if (textInput) commitText();
-                setTextInput({ 
-                    x: pos.x, 
-                    y: pos.y, 
-                    canvasX: getCanvasPos(pos).x, 
-                    canvasY: getCanvasPos(pos).y, 
-                    value: '' 
+                if (textDialog && textDialog.value && textDialog.value.trim() !== '') {
+                    handleAddText(textDialog.value);
+                }
+
+                // Check if user clicked on existing text to edit it
+                const clickedText = elements.find(el => {
+                    if (el.type === 'text') {
+                        const bounds = getElementBounds(el);
+                        return isPointInBounds(canvasPos, bounds, 20);
+                    }
+                    return false;
+                });
+
+                if (clickedText) {
+                    setElements(prev => prev.filter(el => el.id !== clickedText.id));
+                    setTextDialog({
+                        canvasX: clickedText.x,
+                        canvasY: clickedText.y,
+                        value: clickedText.text || ''
+                    });
+                    return;
+                }
+
+                setTextDialog({
+                    canvasX: canvasPos.x,
+                    canvasY: canvasPos.y,
+                    value: ''
                 });
                 return;
             }
 
+            // Eraser tool - check if clicked on text/shapes to delete
+            if (tool === 'eraser') {
+                const clickedElement = elements.find(el => {
+                    const bounds = getElementBounds(el);
+                    return isPointInBounds(canvasPos, bounds, 15);
+                });
+
+                if (clickedElement && (clickedElement.type === 'text' || clickedElement.type === 'rectangle' || clickedElement.type === 'circle')) {
+                    setElements(prev => prev.filter(el => el.id !== clickedElement.id));
+                    return;
+                }
+            }
+
+            // Drawing tools
+            if (e.target.setPointerCapture && e.pointerId !== undefined) {
+                try { e.target.setPointerCapture(e.pointerId); } catch {}
+            }
             setIsDrawing(true);
-            const canvasPos = getCanvasPos(pos);
 
             if (tool === 'pen' || tool === 'eraser') {
                 setElements(prev => [
                     ...prev,
-                    { type: 'path', tool, color, width: strokeWidth, points: [canvasPos] }
+                    { id: Date.now() + Math.random(), type: 'path', tool, color, width: strokeWidth, points: [canvasPos] }
                 ]);
             } else if (tool === 'rectangle' || tool === 'circle') {
                 setElements(prev => [
                     ...prev,
-                    { type: tool, tool, color, width: strokeWidth, x: canvasPos.x, y: canvasPos.y, w: 0, h: 0 }
+                    { id: Date.now() + Math.random(), type: tool, tool, color, width: strokeWidth, x: canvasPos.x, y: canvasPos.y, w: 0, h: 0 }
                 ]);
             }
         }
@@ -323,8 +523,29 @@ export default function CanvasEditor() {
             return;
         }
 
+        const canvasPos = getCanvasPos(pos);
+
+        // Broadcast cursor position to partners (throttled)
+        if (Date.now() - lastCursorEmitRef.current > 50) {
+            lastCursorEmitRef.current = Date.now();
+            emitCanvasCursor(docId, canvasPos.x, canvasPos.y);
+        }
+
         if (isDrawing) {
-            const canvasPos = getCanvasPos(pos);
+            // Eraser dragging over shapes/text
+            if (tool === 'eraser') {
+                const hit = elements.find(el => {
+                    if (el.type === 'text' || el.type === 'rectangle' || el.type === 'circle') {
+                        const bounds = getElementBounds(el);
+                        return isPointInBounds(canvasPos, bounds, 15);
+                    }
+                    return false;
+                });
+                if (hit) {
+                    setElements(prev => prev.filter(el => el.id !== hit.id));
+                }
+            }
+
             setElements(prev => {
                 const lastEl = prev[prev.length - 1];
                 if (!lastEl) return prev;
@@ -345,11 +566,14 @@ export default function CanvasEditor() {
         setIsDrawing(false);
         setIsPanning(false);
         setLastPointerPosition(null);
-        if (canvasRef.current) {
-            canvasRef.current.releasePointerCapture(e.pointerId);
+        if (canvasRef.current && e.pointerId !== undefined) {
+            try {
+                canvasRef.current.releasePointerCapture(e.pointerId);
+            } catch {}
         }
     };
 
+    // Zoom on wheel
     useEffect(() => {
         const canvas = canvasRef.current;
         if (!canvas) return;
@@ -391,39 +615,19 @@ export default function CanvasEditor() {
     }, []);
 
     const clearCanvas = () => {
-        if (window.confirm("Are you sure you want to clear the entire canvas?")) {
+        if (window.confirm("Are you sure you want to clear the canvas?")) {
             setElements([]);
+            setTextDialog(null);
         }
     };
 
-    const commitText = () => {
-        if (textInput && textInput.value.trim() !== '') {
-            setElements(prev => [
-                ...prev,
-                { 
-                    type: 'text', 
-                    tool: 'text', 
-                    color, 
-                    width: strokeWidth, 
-                    x: textInput.canvasX, 
-                    y: textInput.canvasY, 
-                    text: textInput.value 
-                }
-            ]);
+    // Auto focus text input when dialog opens
+    useEffect(() => {
+        if (textDialog && textInputRef.current) {
+            textInputRef.current.focus();
+            textInputRef.current.select?.();
         }
-        setTextInput(null);
-    };
-
-    const handleTextKeyDown = (e) => {
-        if (e.key === 'Enter' && !e.shiftKey) {
-            e.preventDefault();
-            commitText();
-            setTool('pen');
-        } else if (e.key === 'Escape') {
-            setTextInput(null);
-            setTool('pen');
-        }
-    };
+    }, [textDialog]);
 
     if (loading) {
         return (
@@ -434,8 +638,9 @@ export default function CanvasEditor() {
     }
 
     return (
-        <div className="w-full h-screen bg-[#0A0E15] flex flex-col overflow-hidden text-white">
-            <header className="w-full h-16 bg-zinc-900/90 backdrop-blur-md border-b border-zinc-800 px-6 flex items-center justify-between z-50">
+        <div className="w-full h-screen bg-[#0A0E15] flex flex-col overflow-hidden text-white select-none">
+            {/* Header */}
+            <header className="w-full h-16 bg-zinc-900/95 backdrop-blur border-b border-zinc-800 px-6 flex items-center justify-between z-30">
                 <div className="flex items-center gap-4">
                     <button
                         onClick={handleClose}
@@ -467,55 +672,57 @@ export default function CanvasEditor() {
                     </div>
                 </div>
 
-                <div className="flex items-center gap-2 bg-zinc-800/50 px-4 py-1.5 rounded-full border border-zinc-700/50">
-                    <div className="flex items-center gap-1 mr-2">
+                {/* Main Toolbar */}
+                <div className="flex items-center gap-2 bg-zinc-800/80 px-4 py-1.5 rounded-full border border-zinc-700/60 shadow-lg">
+                    <div className="flex items-center gap-1">
                         <button
-                            onClick={() => setTool('pan')}
-                            className={`p-2 rounded-md transition-colors ${tool === 'pan' ? 'bg-zinc-600 text-white' : 'text-zinc-400 hover:text-white hover:bg-zinc-700'}`}
-                            title="Pan Tool (or Space/Middle-Click)"
+                            onClick={() => { setTool('pen'); setTextDialog(null); }}
+                            className={`p-2 rounded-md transition-colors ${tool === 'pen' ? 'bg-indigo-600 text-white' : 'text-zinc-400 hover:text-white hover:bg-zinc-700'}`}
+                            title="Pen / Brush"
                         >
-                            <FiMove />
+                            <FiEdit2 className="text-base" />
                         </button>
                         <button
-                            onClick={() => setTool('pen')}
-                            className={`p-2 rounded-md transition-colors ${tool === 'pen' ? 'bg-indigo-500/20 text-indigo-400' : 'text-zinc-400 hover:text-white hover:bg-zinc-700'}`}
-                            title="Pen Tool"
-                        >
-                            <FiEdit2 />
-                        </button>
-                        <button
-                            onClick={() => setTool('rectangle')}
-                            className={`p-2 rounded-md transition-colors ${tool === 'rectangle' ? 'bg-indigo-500/20 text-indigo-400' : 'text-zinc-400 hover:text-white hover:bg-zinc-700'}`}
+                            onClick={() => { setTool('rectangle'); setTextDialog(null); }}
+                            className={`p-2 rounded-md transition-colors ${tool === 'rectangle' ? 'bg-indigo-600 text-white' : 'text-zinc-400 hover:text-white hover:bg-zinc-700'}`}
                             title="Rectangle"
                         >
-                            <FiSquare />
+                            <FiSquare className="text-base" />
                         </button>
                         <button
-                            onClick={() => setTool('circle')}
-                            className={`p-2 rounded-md transition-colors ${tool === 'circle' ? 'bg-indigo-500/20 text-indigo-400' : 'text-zinc-400 hover:text-white hover:bg-zinc-700'}`}
+                            onClick={() => { setTool('circle'); setTextDialog(null); }}
+                            className={`p-2 rounded-md transition-colors ${tool === 'circle' ? 'bg-indigo-600 text-white' : 'text-zinc-400 hover:text-white hover:bg-zinc-700'}`}
                             title="Circle"
                         >
-                            <FiCircle />
+                            <FiCircle className="text-base" />
                         </button>
                         <button
                             onClick={() => setTool('text')}
-                            className={`p-2 rounded-md transition-colors ${tool === 'text' ? 'bg-indigo-500/20 text-indigo-400' : 'text-zinc-400 hover:text-white hover:bg-zinc-700'}`}
-                            title="Text"
+                            className={`p-2 rounded-md transition-colors ${tool === 'text' ? 'bg-indigo-600 text-white' : 'text-zinc-400 hover:text-white hover:bg-zinc-700'}`}
+                            title="Text Tool (Click anywhere on canvas to type, or click existing text to edit)"
                         >
-                            <FiType />
+                            <FiType className="text-base" />
                         </button>
                         <button
-                            onClick={() => setTool('eraser')}
-                            className={`p-2 rounded-md transition-colors ${tool === 'eraser' ? 'bg-red-500/20 text-red-400' : 'text-zinc-400 hover:text-white hover:bg-zinc-700'}`}
-                            title="Eraser Tool"
+                            onClick={() => { setTool('eraser'); setTextDialog(null); }}
+                            className={`p-2 rounded-md transition-colors ${tool === 'eraser' ? 'bg-red-500/30 text-red-400' : 'text-zinc-400 hover:text-white hover:bg-zinc-700'}`}
+                            title="Eraser (Erase ink & click/drag to delete shapes or text)"
                         >
-                            <div className="w-4 h-4 border-2 border-current rounded-sm"></div>
+                            <div className="w-4 h-4 border-2 border-current rounded-sm flex items-center justify-center text-[9px] font-bold">E</div>
+                        </button>
+                        <button
+                            onClick={() => { setTool('pan'); setTextDialog(null); }}
+                            className={`p-2 rounded-md transition-colors ${tool === 'pan' ? 'bg-zinc-600 text-white' : 'text-zinc-400 hover:text-white hover:bg-zinc-700'}`}
+                            title="Pan Tool"
+                        >
+                            <FiMove className="text-base" />
                         </button>
                     </div>
                     
-                    <div className="w-[1px] h-6 bg-zinc-700 mx-1"></div>
+                    <div className="w-[1px] h-6 bg-zinc-700 mx-1" />
                     
-                    <div className="flex items-center gap-1">
+                    {/* Color Presets */}
+                    <div className="flex items-center gap-1.5">
                         {PRESET_COLORS.map(preset => (
                             <button
                                 key={preset}
@@ -528,8 +735,9 @@ export default function CanvasEditor() {
                         ))}
                     </div>
 
-                    <div className="w-[1px] h-6 bg-zinc-700 mx-2"></div>
+                    <div className="w-[1px] h-6 bg-zinc-700 mx-1" />
                     
+                    {/* Custom Color */}
                     <input 
                         type="color" 
                         value={color} 
@@ -539,6 +747,7 @@ export default function CanvasEditor() {
                         disabled={tool === 'eraser'}
                     />
                     
+                    {/* Size Slider */}
                     <input 
                         type="range" 
                         min="1" 
@@ -546,21 +755,29 @@ export default function CanvasEditor() {
                         value={strokeWidth} 
                         onChange={(e) => setStrokeWidth(parseInt(e.target.value))}
                         className="w-20 accent-indigo-500 ml-2"
-                        title="Stroke/Font Size"
+                        title="Stroke & Text Size"
                     />
 
-                    <div className="w-[1px] h-6 bg-zinc-700 mx-2"></div>
+                    <div className="w-[1px] h-6 bg-zinc-700 mx-1" />
 
+                    {/* Clear Canvas */}
                     <button
                         onClick={clearCanvas}
                         className="p-2 text-zinc-400 hover:text-red-400 hover:bg-zinc-700 rounded-md transition-colors"
                         title="Clear Canvas"
                     >
-                        <FiTrash2 />
+                        <FiTrash2 className="text-base" />
                     </button>
                 </div>
 
+                {/* Right Actions & Collaboration */}
                 <div className="flex items-center gap-3">
+                    <CollaboratorsBar
+                        doc={doc}
+                        activeUsers={activeUsers}
+                        onOpenShare={() => setShowShareModal(true)}
+                    />
+                    <div className="h-6 w-[1px] bg-zinc-800 hidden sm:block" />
                     <CapsuleButton type="outline" onClick={handleClose}>Close</CapsuleButton>
                     <CapsuleButton type="active" onClick={handleSave} disabled={saving}>
                         {saving ? 'Saving...' : 'Save Canvas'}
@@ -568,6 +785,7 @@ export default function CanvasEditor() {
                 </div>
             </header>
 
+            {/* Canvas Viewport */}
             <main ref={containerRef} className="flex-1 relative w-full h-full overflow-hidden touch-none">
                 <canvas
                     ref={gridCanvasRef}
@@ -579,39 +797,104 @@ export default function CanvasEditor() {
                     onPointerMove={handlePointerMove}
                     onPointerUp={handlePointerUp}
                     onPointerLeave={handlePointerUp}
+                    onDoubleClick={handleDoubleClick}
                     className="absolute inset-0 w-full h-full"
                     style={{
-                        cursor: tool === 'pan' ? 'grab' : tool === 'text' ? 'text' : isDrawing ? 'crosshair' : 'default',
+                        cursor: tool === 'pan' ? 'grab' : tool === 'text' ? 'text' : tool === 'eraser' ? 'crosshair' : isDrawing ? 'crosshair' : 'default',
                         touchAction: 'none'
                     }}
                 />
-                
-                {textInput && (
-                    <input
-                        autoFocus
-                        type="text"
-                        value={textInput.value}
-                        onChange={(e) => setTextInput({ ...textInput, value: e.target.value })}
-                        onKeyDown={handleTextKeyDown}
-                        onBlur={commitText}
-                        className="absolute bg-transparent border-none outline-none resize-none overflow-hidden whitespace-nowrap"
+
+                {/* Floating Text Input Box */}
+                {textDialog && (
+                    <div
+                        className="absolute z-40 flex items-center gap-1.5 bg-[#161B22] border-2 border-indigo-500 rounded-lg p-2 shadow-2xl backdrop-blur"
                         style={{
-                            left: textInput.x,
-                            top: textInput.y,
-                            color: color,
-                            fontSize: `${Math.max(16, strokeWidth * 3) * camera.zoom}px`,
-                            transform: 'translateY(-2px)',
-                            fontFamily: 'sans-serif',
-                            minWidth: '200px'
+                            left: `${textDialog.canvasX * camera.zoom + camera.x}px`,
+                            top: `${textDialog.canvasY * camera.zoom + camera.y}px`,
+                            transform: 'translate(-4px, -4px)'
                         }}
-                        placeholder="Type here..."
-                    />
+                        onPointerDown={(e) => e.stopPropagation()}
+                        onMouseDown={(e) => e.stopPropagation()}
+                        onTouchStart={(e) => e.stopPropagation()}
+                    >
+                        <input
+                            ref={textInputRef}
+                            type="text"
+                            autoFocus
+                            placeholder="Type text..."
+                            value={textDialog.value}
+                            onChange={(e) => setTextDialog(prev => ({ ...prev, value: e.target.value }))}
+                            onKeyDown={(e) => {
+                                e.stopPropagation();
+                                if (e.key === 'Enter') {
+                                    handleAddText();
+                                } else if (e.key === 'Escape') {
+                                    setTextDialog(null);
+                                }
+                            }}
+                            className="bg-transparent text-white px-2 py-1 outline-none font-medium text-base min-w-[160px]"
+                            style={{
+                                color: color,
+                                fontSize: `${Math.max(16, strokeWidth * 2.5)}px`
+                            }}
+                        />
+                        <button
+                            onClick={() => handleAddText()}
+                            className="bg-indigo-600 hover:bg-indigo-500 text-white px-3 py-1.5 rounded-md font-medium text-xs transition-colors flex items-center gap-1 cursor-pointer shadow"
+                            title="Done (Enter)"
+                        >
+                            <FiCornerDownLeft className="text-sm" /> Done
+                        </button>
+                        <button
+                            onClick={() => setTextDialog(null)}
+                            className="text-zinc-400 hover:text-white p-1.5 rounded hover:bg-zinc-700 transition-colors flex items-center justify-center cursor-pointer"
+                            title="Cancel (Esc)"
+                        >
+                            <FiX className="text-sm" />
+                        </button>
+                    </div>
                 )}
                 
-                <div className="absolute bottom-6 right-6 bg-zinc-800/80 backdrop-blur border border-zinc-700 px-3 py-1.5 rounded-full text-xs text-zinc-300 pointer-events-none font-medium shadow-lg">
+                {/* Live Remote Collaborator Cursors */}
+                {Object.values(remoteCursors).map((rc) => {
+                    const screenX = rc.x * camera.zoom + camera.x;
+                    const screenY = rc.y * camera.zoom + camera.y;
+                    return (
+                        <div
+                            key={rc.userId}
+                            className="absolute pointer-events-none transition-all duration-75 z-30"
+                            style={{
+                                left: `${screenX}px`,
+                                top: `${screenY}px`,
+                            }}
+                        >
+                            <svg className="w-5 h-5 drop-shadow-md" viewBox="0 0 24 24" fill={rc.color || '#6366f1'}>
+                                <path d="M3 3l7 18 3-7 7-3L3 3z" />
+                            </svg>
+                            <div
+                                style={{ backgroundColor: rc.color || '#6366f1' }}
+                                className="px-2 py-0.5 rounded-full text-[10px] font-semibold text-white shadow-lg whitespace-nowrap ml-3 -mt-1 select-none"
+                            >
+                                {rc.name}
+                            </div>
+                        </div>
+                    );
+                })}
+
+                {/* Zoom Indicator */}
+                <div className="absolute bottom-6 right-6 bg-zinc-800/80 backdrop-blur border border-zinc-700 px-3 py-1.5 rounded-full text-xs text-zinc-300 pointer-events-none font-medium shadow-lg z-20">
                     {Math.round(camera.zoom * 100)}%
                 </div>
             </main>
+
+            {/* Share & Collaboration Modal */}
+            <ShareModal
+                isOpen={showShareModal}
+                onClose={() => setShowShareModal(false)}
+                doc={doc}
+                onUpdate={(updatedDoc) => setDoc(updatedDoc)}
+            />
         </div>
     );
 }

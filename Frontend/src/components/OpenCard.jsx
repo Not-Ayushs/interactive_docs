@@ -1,6 +1,7 @@
 import { useState, useEffect } from "react";
 import { IoIosCloseCircle } from "react-icons/io";
 import Editor from './Editor'
+import { getApiBaseUrl } from '../utils/api.js';
 
 export default function OpenCard({ showModal, setShowModal, doc, onUpdate }) {
     const [currentContent, setCurrentContent] = useState(doc?.desc || "");
@@ -22,7 +23,7 @@ export default function OpenCard({ showModal, setShowModal, doc, onUpdate }) {
             return;
         }
 
-        const apiBaseUrl = import.meta.env.VITE_API_URL || "http://localhost:5000";
+        const apiBaseUrl = getApiBaseUrl();
         fetch(`${apiBaseUrl}/api/documents/${doc._id}`, {
             method: "PUT",
             headers: {

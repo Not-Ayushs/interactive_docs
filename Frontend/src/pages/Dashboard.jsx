@@ -6,8 +6,10 @@ import Sidebar from '../components/Sidebar.jsx';
 import Background from '../components/Background.jsx';
 import AddDocButton from '../components/AddDocButton.jsx';
 import AddDocModal from '../components/AddDocModal.jsx';
-import { FiSearch, FiPlus, FiDownload, FiTrash2, FiMenu } from 'react-icons/fi';
+import DashboardCard from '../components/DashboardCard.jsx';
+import { FiSearch, FiPlus, FiMenu, FiUsers, FiFolder } from 'react-icons/fi';
 import { getApiBaseUrl } from '../utils/api.js';
+import { getSocket } from '../utils/socket.js';
 
 const DEFAULT_SHORTCUTS = [
     { title: 'Promotion', edited: 'Edited 2 days ago' },
@@ -23,10 +25,11 @@ export default function Dashboard() {
     const [shortcuts, setShortcuts] = useState(DEFAULT_SHORTCUTS);
     const [searchQuery, setSearchQuery] = useState('');
     const [showAddModal, setShowAddModal] = useState(false);
+    const [filterCollabOnly, setFilterCollabOnly] = useState(false);
     const sidebarOpen = useSelector((state) => state.ui.sidebarOpen);
     const dispatch = useDispatch();
 
-    useEffect(() => {
+    const fetchDocuments = () => {
         const apiBaseUrl = getApiBaseUrl();
         const token = localStorage.getItem('token');
         fetch(`${apiBaseUrl}/api/documents`, {
@@ -36,11 +39,30 @@ export default function Dashboard() {
         })
             .then(res => res.json())
             .then(docs => {
-                if (Array.isArray(docs) && docs.length > 0) {
+                if (Array.isArray(docs)) {
                     setDocuments(docs);
                 }
             })
             .catch(() => {});
+    };
+
+    useEffect(() => {
+        fetchDocuments();
+    }, []);
+
+    // Real-time socket sync on shares
+    useEffect(() => {
+        const socket = getSocket();
+        const handleRefresh = () => {
+            fetchDocuments();
+        };
+        socket.on("document-shared", handleRefresh);
+        socket.on("collection-shared", handleRefresh);
+
+        return () => {
+            socket.off("document-shared", handleRefresh);
+            socket.off("collection-shared", handleRefresh);
+        };
     }, []);
 
     useEffect(() => {
@@ -67,6 +89,21 @@ export default function Dashboard() {
         sc.title.toLowerCase().includes(searchQuery.toLowerCase())
     );
 
+    const displayedDocs = documents.filter(doc => {
+        const matchesSearch = 
+            (doc.title && doc.title.toLowerCase().includes(searchQuery.toLowerCase())) ||
+            (doc.collectionName && doc.collectionName.toLowerCase().includes(searchQuery.toLowerCase())) ||
+            (doc.desc && doc.desc.toLowerCase().includes(searchQuery.toLowerCase()));
+
+        if (!matchesSearch) return false;
+        if (filterCollabOnly) {
+            return doc.isCollaborative || (doc.collaborators && doc.collaborators.length > 0);
+        }
+        return true;
+    });
+
+    const collabCount = documents.filter(d => d.isCollaborative || (d.collaborators && d.collaborators.length > 0)).length;
+
     return (
         <div className="relative w-full h-screen overflow-hidden bg-[#0A0A0A]">
             <Sidebar />
@@ -76,7 +113,7 @@ export default function Dashboard() {
             <div className={`transition-all duration-300 h-full flex flex-col z-20 relative pl-0 ${sidebarOpen ? 'sm:pl-[240px]' : 'sm:pl-[80px]'}`}>
                 
                 {/* Header Section */}
-                <div className="px-4 sm:px-10 pt-12 pb-6 border-b border-zinc-800/50 flex flex-col md:flex-row md:items-end justify-between">
+                <div className="px-4 sm:px-10 pt-10 pb-6 border-b border-zinc-800/50 flex flex-col md:flex-row md:items-end justify-between shrink-0">
                     <div className="flex items-center gap-4">
                         <button 
                             className="sm:hidden text-zinc-400 hover:text-white"
@@ -85,62 +122,112 @@ export default function Dashboard() {
                             <FiMenu size={24} />
                         </button>
                         <div>
-                            <p className="text-zinc-500 text-sm mb-1">Choose project:</p>
+                            <p className="text-zinc-500 text-xs uppercase tracking-wider font-semibold mb-1">
+                                Workspace & Collaboration
+                            </p>
                             <h1 className="text-2xl sm:text-3xl font-bold text-white">
-                                Choose a project to work
+                                All Projects & Documents
                             </h1>
                         </div>
                     </div>
 
-                    <div className="flex flex-col sm:flex-row items-start sm:items-center gap-4 mt-4 md:mt-0 w-full md:w-auto">
+                    <div className="flex flex-col sm:flex-row items-start sm:items-center gap-3 mt-4 md:mt-0 w-full md:w-auto">
                         <div className="relative w-full sm:w-64">
                             <input
                                 type="text"
                                 value={searchQuery}
                                 onChange={(e) => setSearchQuery(e.target.value)}
-                                placeholder="Search"
-                                className="w-full bg-[#111111] border border-zinc-800 rounded-lg py-2 px-4 text-sm text-white placeholder-zinc-500 focus:outline-none focus:border-zinc-600 transition-colors"
+                                placeholder="Search documents or collections..."
+                                className="w-full bg-[#14151C] border border-zinc-800 rounded-xl py-2 px-4 text-xs text-white placeholder-zinc-500 focus:outline-none focus:border-indigo-500 transition-colors"
                             />
-                            <FiSearch className="absolute right-3 top-1/2 -translate-y-1/2 text-zinc-500" />
+                            <FiSearch className="absolute right-3 top-1/2 -translate-y-1/2 text-zinc-500 text-xs" />
                         </div>
                         
                         <div className="flex gap-2">
-                            <button onClick={() => setShowAddModal(true)} className="flex items-center gap-2 px-3 py-2 text-sm text-zinc-400 hover:text-white transition-colors bg-[#111111] rounded-lg border border-zinc-800">
-                                <FiPlus size={16} /> Create
+                            <button
+                                onClick={() => setFilterCollabOnly(prev => !prev)}
+                                className={`flex items-center gap-1.5 px-3 py-2 text-xs font-medium rounded-xl border transition-colors cursor-pointer ${
+                                    filterCollabOnly 
+                                        ? 'bg-indigo-600 text-white border-indigo-500' 
+                                        : 'bg-[#14151C] text-zinc-400 hover:text-white border-zinc-800'
+                                }`}
+                            >
+                                <FiUsers size={13} />
+                                <span>Collaborative ({collabCount})</span>
                             </button>
-                            <button className="flex items-center gap-2 px-3 py-2 text-sm text-zinc-400 hover:text-white transition-colors bg-[#111111] rounded-lg border border-zinc-800">
-                                <FiTrash2 size={16} /> Remove
+
+                            <button
+                                onClick={() => setShowAddModal(true)}
+                                className="flex items-center gap-1.5 px-4 py-2 text-xs font-semibold text-white bg-indigo-600 hover:bg-indigo-500 rounded-xl border border-indigo-500 shadow-md shadow-indigo-600/20 transition-all cursor-pointer"
+                            >
+                                <FiPlus size={15} /> Create
                             </button>
                         </div>
                     </div>
                 </div>
 
                 {/* Content Grid */}
-                <div className="flex-1 overflow-y-auto p-4 sm:p-10">
-                    <div className="flex flex-wrap gap-10 mt-4">
-                        {filteredShortcuts.map((sc, index) => {
-                            const hasDocs = documents.some(doc => doc.collectionName === sc.title);
-                            const folderSrc = hasDocs ? "/FilledFolder.png" : "/NotFiledFolder.png";
-                            
-                            return (
-                                <div
-                                    key={index}
-                                    onClick={() => navigate(`/app/collections/${encodeURIComponent(sc.title)}`)}
-                                    className="group flex flex-col items-center cursor-pointer transition-transform duration-200 hover:scale-105"
-                                >
-                                    <div className="w-32 h-28 relative flex items-center justify-center">
-                                        <img
-                                            src={folderSrc}
-                                            alt="Folder"
-                                            className="w-full h-full object-contain filter group-hover:brightness-125 transition-all"
-                                        />
-                                    </div>
-                                    <span className="text-sm text-zinc-400 group-hover:text-white font-medium text-center mt-3 max-w-[120px] truncate leading-tight">
-                                        {sc.title}
-                                    </span>
+                <div className="flex-1 overflow-y-auto p-4 sm:p-10 space-y-10">
+                    {/* Recent & Collaborative Documents Grid */}
+                    {displayedDocs.length > 0 && (
+                        <div>
+                            <div className="flex items-center justify-between mb-4">
+                                <div className="flex items-center gap-2">
+                                    <h2 className="text-xs font-bold uppercase tracking-wider text-zinc-400">
+                                        {filterCollabOnly ? 'Collaborative Documents' : 'Documents & Canvases'}
+                                    </h2>
+                                    <span className="text-xs text-zinc-500 font-medium">({displayedDocs.length})</span>
                                 </div>
-                            )
-                        })}
+                            </div>
+                            
+                            <div className="flex gap-4 overflow-x-auto pb-4 pt-1 items-stretch">
+                                {displayedDocs.map((doc) => (
+                                    <DashboardCard
+                                        key={doc._id}
+                                        doc={doc}
+                                        onUpdate={(updated) => {
+                                            setDocuments(prev => prev.map(d => d._id === updated._id ? updated : d));
+                                        }}
+                                    />
+                                ))}
+                            </div>
+                        </div>
+                    )}
+
+                    {/* Project Folders Section */}
+                    <div>
+                        <div className="flex items-center gap-2 mb-4">
+                            <FiFolder className="text-amber-400 text-sm" />
+                            <h2 className="text-xs font-bold uppercase tracking-wider text-zinc-400">
+                                Collections & Folders
+                            </h2>
+                        </div>
+
+                        <div className="flex flex-wrap gap-10 mt-2">
+                            {filteredShortcuts.map((sc, index) => {
+                                const hasDocs = documents.some(doc => doc.collectionName === sc.title);
+                                const folderSrc = hasDocs ? "/FilledFolder.png" : "/NotFiledFolder.png";
+                                
+                                return (
+                                    <div
+                                        key={index}
+                                        onClick={() => navigate(`/app/collections/${encodeURIComponent(sc.title)}`)}
+                                        className="group flex flex-col items-center cursor-pointer transition-transform duration-200 hover:scale-105"
+                                    >
+                                        <div className="w-32 h-28 relative flex items-center justify-center">
+                                            <img
+                                                src={folderSrc}
+                                                alt="Folder"
+                                                className="w-full h-full object-contain filter group-hover:brightness-125 transition-all"
+                                            />
+                                        </div>
+                                        <span className="text-sm text-zinc-400 group-hover:text-white font-medium text-center mt-3 max-w-[120px] truncate leading-tight">
+                                            {sc.title}
+                                        </span>
+                                    </div>
+                                );
+                            })}
+                        </div>
                     </div>
                 </div>
 
