@@ -1,17 +1,14 @@
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import { IoIosCloseCircle } from "react-icons/io";
 import Editor from './Editor'
 import { getApiBaseUrl } from '../utils/api.js';
 
-export default function OpenCard({ showModal, setShowModal, doc, onUpdate }) {
-    const [currentContent, setCurrentContent] = useState(doc?.desc || "");
+export default function OpenCard(props) {
+    return <OpenCardContent key={props.doc?._id} {...props} />;
+}
 
-    // Sync content state when the doc prop changes
-    useEffect(() => {
-        if (doc) {
-            setCurrentContent(doc.desc || "");
-        }
-    }, [doc]);
+function OpenCardContent({ showModal, setShowModal, doc, onUpdate }) {
+    const [currentContent, setCurrentContent] = useState(doc?.desc || "");
 
     const closeModal = () => {
         setShowModal(false);

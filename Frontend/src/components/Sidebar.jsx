@@ -1,10 +1,9 @@
-import React from 'react';
 import { NavLink, useNavigate } from 'react-router-dom';
 import { useSelector, useDispatch } from 'react-redux';
-import { toggleSidebar, setSidebarOpen } from '../store/uiSlice';
+import { setSidebarOpen } from '../store/uiSlice';
 import { 
-    FiMenu, FiLayout, FiCommand, FiFolder, 
-    FiUser, FiMessageSquare, FiPlus, FiLogOut, FiMap
+    FiMenu, FiLayout, FiFolder,
+    FiUser, FiPlus, FiLogOut
 } from "react-icons/fi";
 import { BiLayer } from "react-icons/bi";
 
@@ -30,7 +29,7 @@ export default function Sidebar() {
             userName = userInfo.email.split('@')[0];
             userInitials = userName.substring(0, 2).toUpperCase();
         }
-    } catch (e) {
+    } catch {
         // Fallback
     }
 

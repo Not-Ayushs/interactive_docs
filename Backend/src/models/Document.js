@@ -15,6 +15,10 @@ const documentSchema = new mongoose.Schema(
       type: String,
       default: "",
     },
+    researchItems: {
+      type: [mongoose.Schema.Types.Mixed],
+      default: [],
+    },
 
     filesize: {
       type: String,

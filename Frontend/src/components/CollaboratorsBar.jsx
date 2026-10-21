@@ -1,4 +1,3 @@
-import React from 'react';
 import { FiUsers, FiShare2 } from 'react-icons/fi';
 import { FaCrown } from 'react-icons/fa';
 

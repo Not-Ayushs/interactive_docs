@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { IoDocumentTextOutline } from "react-icons/io5";
 import { FaEdit, FaCrown } from "react-icons/fa";
@@ -24,7 +24,7 @@ export default function Card({ data, reference, onUpdate }) {
 
     const getShortDesc = (htmlContent) => {
         if (!htmlContent) return data?.docType === 'canvas' ? "Interactive Canvas" : "Empty Document";
-        let text = "";
+        let text;
         try {
             const parsed = new DOMParser().parseFromString(htmlContent, "text/html");
             text = (parsed.body.textContent || "").replace(/\s+/g, " ").trim();

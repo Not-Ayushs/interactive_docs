@@ -1,4 +1,4 @@
-import React, { useEffect } from 'react';
+import React, { useEffect, useImperativeHandle } from 'react';
 import { useEditor, EditorContent } from '@tiptap/react'
 import { FloatingMenu, BubbleMenu } from '@tiptap/react/menus'
 
@@ -63,7 +63,7 @@ const MenuBar = ({ editor }) => {
     );
 };
 
-const Editor = ({title, onChange}) => {
+const Editor = React.forwardRef(({title, onChange}, ref) => {
     const editor = useEditor({
         editorProps: {
             attributes: {
@@ -78,6 +78,36 @@ const Editor = ({title, onChange}) => {
             }
         }
     });
+
+    useImperativeHandle(ref, () => ({
+        insertText: (text) => {
+            if (!editor) return;
+            const position = editor.state.selection.to;
+            const paragraphs = text.split('\n').map((line) => ({
+                type: 'paragraph',
+                content: line ? [{ type: 'text', text: line }] : [],
+            }));
+            editor.chain().insertContentAt(position, paragraphs).run();
+        },
+        insertSources: (sources) => {
+            if (!editor || !sources?.length) return;
+            const content = [
+                { type: 'paragraph', content: [{ type: 'text', text: 'Sources' }] },
+                ...sources.map((source, index) => ({
+                    type: 'paragraph',
+                    content: [
+                        { type: 'text', text: `${index + 1}. ${source.title || new URL(source.url).hostname}: ` },
+                        { type: 'text', text: source.url, marks: [{ type: 'link', attrs: { href: source.url } }] },
+                    ],
+                })),
+                { type: 'paragraph' },
+            ];
+            const position = editor.state.selection.to;
+            editor.chain().insertContentAt(position, content).run();
+        },
+        getHTML: () => editor?.getHTML() || '',
+        getEditor: () => editor,
+    }), [editor]);
 
     useEffect(() => {
         if (editor && title !== undefined) {
@@ -96,6 +126,6 @@ const Editor = ({title, onChange}) => {
             <BubbleMenu editor={editor}></BubbleMenu>
         </div>
     )
-}
+});
 
 export default Editor

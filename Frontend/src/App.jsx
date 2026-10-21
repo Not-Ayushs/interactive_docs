@@ -1,4 +1,3 @@
-import { useState } from 'react'
 import { BrowserRouter, Routes, Route } from 'react-router-dom'
 import './App.css'
 import Dashboard from './pages/Dashboard.jsx'
@@ -10,7 +9,6 @@ import Landing from './pages/Landing/Landing.jsx'
 import Login from './pages/Login.jsx'
 import Signup from './pages/Signup.jsx'
 import Prank from './pages/Prank.jsx'
-import FeatureShow from './testComponents/featureShow.jsx'
 
 import { Navigate } from 'react-router-dom'
 

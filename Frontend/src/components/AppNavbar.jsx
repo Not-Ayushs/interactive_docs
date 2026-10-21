@@ -1,4 +1,3 @@
-import React from 'react';
 import { NavLink, Link, useLocation, useNavigate } from 'react-router-dom';
 import { FiHome, FiFolder, FiLogOut } from 'react-icons/fi';
 import CapsuleButton from './CapsuleButton';

@@ -1,7 +1,7 @@
 import Tiptap from './Tiptap.jsx'
 
 
-export default function Modal({showModal, setShowModal}) {
+export default function Modal({showModal}) {
     let title = 'my first doc'
     return(
         <>

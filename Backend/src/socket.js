@@ -218,6 +218,38 @@ export const initSocket = (server) => {
       });
     });
 
+    // 6. LIVE IN-PROGRESS STROKE STREAMING (Figma-style live drawing)
+    socket.on("canvas-stroke-live", ({ docId, element }) => {
+      if (!docId) return;
+      socket.to(docId).emit("canvas-stroke-lived", {
+        userId: socket.user._id,
+        color: socket.user.color,
+        element,
+      });
+    });
+
+    // 7. LIVE ELEMENT SELECTION (Figma-style bounding box highlight)
+    socket.on("canvas-select", ({ docId, elementId }) => {
+      if (!docId) return;
+      socket.to(docId).emit("canvas-selected", {
+        userId: socket.user._id,
+        name: socket.user.name,
+        color: socket.user.color,
+        elementId,
+      });
+    });
+
+    // 8. LIVE TYPING STATUS (Google Docs-style typing indicator)
+    socket.on("doc-typing", ({ docId, isTyping }) => {
+      if (!docId) return;
+      socket.to(docId).emit("doc-typing-status", {
+        userId: socket.user._id,
+        name: socket.user.name,
+        color: socket.user.color,
+        isTyping,
+      });
+    });
+
     // 6. DISCONNECT
     socket.on("disconnect", () => {
       console.log(`[Socket] User disconnected: ${socket.user.name}`);

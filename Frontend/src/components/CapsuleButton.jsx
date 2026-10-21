@@ -1,4 +1,3 @@
-import React from 'react';
 
 export default function CapsuleButton({ label, children, type = "outline", onClick, className = "", buttonType = "button", disabled = false }) {
     const baseStyle = "flex items-center justify-center gap-2 px-5 py-2 rounded-full font-medium text-sm transition-all duration-200 cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed";

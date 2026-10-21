@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { FiUsers, FiShare2, FiPenTool } from 'react-icons/fi';
 import { FaCrown } from 'react-icons/fa';

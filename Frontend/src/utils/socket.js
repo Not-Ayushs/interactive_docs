@@ -75,3 +75,24 @@ export const emitCanvasCursor = (docId, x, y) => {
     s.emit("canvas-cursor", { docId, x, y });
   }
 };
+
+export const emitCanvasStrokeLive = (docId, element) => {
+  const s = getSocket();
+  if (s && docId) {
+    s.emit("canvas-stroke-live", { docId, element });
+  }
+};
+
+export const emitCanvasSelect = (docId, elementId) => {
+  const s = getSocket();
+  if (s && docId) {
+    s.emit("canvas-select", { docId, elementId });
+  }
+};
+
+export const emitDocTyping = (docId, isTyping) => {
+  const s = getSocket();
+  if (s && docId) {
+    s.emit("doc-typing", { docId, isTyping });
+  }
+};

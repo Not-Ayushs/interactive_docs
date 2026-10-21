@@ -1,5 +1,5 @@
-import React, { useState, useEffect } from 'react';
-import { useParams, useNavigate } from 'react-router-dom';
+import { useState, useEffect } from 'react';
+import { useParams } from 'react-router-dom';
 import Sidebar from '../components/Sidebar.jsx';
 import Background from '../components/Background.jsx';
 import KanbanBoard from '../components/KanbanBoard.jsx';
@@ -8,7 +8,6 @@ import { getApiBaseUrl } from '../utils/api.js';
 
 export default function CollectionOpen() {
     const { collectionName } = useParams();
-    const navigate = useNavigate();
     const decodedName = collectionName ? decodeURIComponent(collectionName) : 'Untitled Collection';
     
     const [sidebarOpen, setSidebarOpen] = useState(true);
@@ -47,7 +46,7 @@ export default function CollectionOpen() {
 
             {/* Main Content Area */}
             <div className={`transition-all duration-300 h-full flex flex-col z-20 relative ${sidebarOpen ? 'pl-[240px]' : 'pl-[80px]'}`}>
-                <KanbanBoard documents={documents} collectionName={decodedName} onAddClick={() => setShowAddModal(true)} />
+                <KanbanBoard documents={documents} collectionName={decodedName} />
             </div>
 
             <AddDocModal 

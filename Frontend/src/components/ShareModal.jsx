@@ -1,9 +1,14 @@
-import React, { useState, useEffect } from 'react';
-import { FiX, FiUserPlus, FiUsers, FiLink, FiCheck, FiTrash2, FiSearch, FiShield, FiMail } from 'react-icons/fi';
+import { useState, useEffect } from 'react';
+import { FiX, FiUserPlus, FiUsers, FiLink, FiCheck, FiTrash2 } from 'react-icons/fi';
 import { FaCrown } from 'react-icons/fa';
 import { getApiBaseUrl } from '../utils/api.js';
 
-export default function ShareModal({ isOpen, onClose, doc, collectionName, onUpdate }) {
+export default function ShareModal(props) {
+    const key = props.isOpen ? `open-${props.doc?._id || props.collectionName || 'collection'}` : 'closed';
+    return <ShareModalContent key={key} {...props} />;
+}
+
+function ShareModalContent({ isOpen, onClose, doc, collectionName, onUpdate }) {
     const [email, setEmail] = useState('');
     const [role, setRole] = useState('editor');
     const [loading, setLoading] = useState(false);
@@ -25,21 +30,9 @@ export default function ShareModal({ isOpen, onClose, doc, collectionName, onUpd
     const apiBaseUrl = getApiBaseUrl();
     const token = localStorage.getItem('token');
 
-    // Reset fields on modal open
-    useEffect(() => {
-        if (isOpen) {
-            setEmail('');
-            setError('');
-            setSuccessMsg('');
-            setCopied(false);
-            setSuggestions([]);
-        }
-    }, [isOpen]);
-
     // Live search suggestions as user types
     useEffect(() => {
         if (!email.trim() || email.length < 2) {
-            setSuggestions([]);
             return;
         }
 
@@ -128,7 +121,7 @@ export default function ShareModal({ isOpen, onClose, doc, collectionName, onUpd
                 setSuccessMsg(`Removed ${collabEmail}`);
                 setTimeout(() => setSuccessMsg(''), 3000);
             }
-        } catch (err) {
+        } catch {
             setError('Failed to remove collaborator');
         }
     };

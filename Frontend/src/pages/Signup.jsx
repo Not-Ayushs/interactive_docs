@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import AuthForm from '../components/AuthForm';
 import { getApiBaseUrl } from '../utils/api.js';
@@ -37,7 +37,7 @@ const Signup = () => {
       } else {
         setError(data.message || 'Signup failed');
       }
-    } catch (err) {
+    } catch {
       setError('An error occurred. Please try again later.');
     } finally {
       setIsLoading(false);

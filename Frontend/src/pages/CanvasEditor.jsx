@@ -1,11 +1,11 @@
-import React, { useState, useEffect, useRef, useCallback } from 'react';
+import { useState, useEffect, useRef, useCallback } from 'react';
 import { useParams, useNavigate, useLocation } from 'react-router-dom';
 import CapsuleButton from '../components/CapsuleButton.jsx';
 import ShareModal from '../components/ShareModal.jsx';
 import CollaboratorsBar from '../components/CollaboratorsBar.jsx';
 import { FiX, FiCheck, FiFolder, FiEdit2, FiMove, FiTrash2, FiSquare, FiCircle, FiType, FiCornerDownLeft } from 'react-icons/fi';
 import { getApiBaseUrl } from '../utils/api.js';
-import { getSocket, joinDocumentRoom, leaveDocumentRoom, emitCanvasChange, emitCanvasCursor } from '../utils/socket.js';
+import { getSocket, joinDocumentRoom, leaveDocumentRoom, emitCanvasChange, emitCanvasCursor, emitCanvasStrokeLive } from '../utils/socket.js';
 
 const PRESET_COLORS = ['#ffffff', '#ff4d4d', '#4dff4d', '#4d4dff', '#ffff4d'];
 
@@ -25,11 +25,14 @@ export default function CanvasEditor() {
     const [savedStatus, setSavedStatus] = useState('');
     const [activeUsers, setActiveUsers] = useState([]);
     const [remoteCursors, setRemoteCursors] = useState({});
+    const [remoteLiveStrokes, setRemoteLiveStrokes] = useState({});
+    const [remoteSelections, setRemoteSelections] = useState({});
     const [showShareModal, setShowShareModal] = useState(false);
 
     const isRemoteCanvasUpdateRef = useRef(false);
     const hasLoadedInitialRef = useRef(false);
     const lastCursorEmitRef = useRef(0);
+    const lastLiveStrokeEmitRef = useRef(0);
 
     // --- Canvas State ---
     const [elements, setElements] = useState([]);
@@ -105,6 +108,14 @@ export default function CanvasEditor() {
             if (data && data.elements) {
                 isRemoteCanvasUpdateRef.current = true;
                 setElements(data.elements);
+                // Clear in-progress live stroke for this editor since it's now finalized in elements
+                if (data.updatedBy?._id) {
+                    setRemoteLiveStrokes(prev => {
+                        const copy = { ...prev };
+                        delete copy[data.updatedBy._id];
+                        return copy;
+                    });
+                }
                 const editorName = data.updatedBy?.name || 'Partner';
                 setSavedStatus(`Edited in real-time by ${editorName}`);
                 setTimeout(() => setSavedStatus('All changes synced'), 2000);
@@ -119,9 +130,47 @@ export default function CanvasEditor() {
 
         const handleCursorMoved = (cursor) => {
             if (cursor && cursor.userId) {
+                const lastSeen = Date.now();
                 setRemoteCursors(prev => ({
                     ...prev,
-                    [cursor.userId]: cursor
+                    [cursor.userId]: {
+                        ...cursor,
+                        lastSeen,
+                    }
+                }));
+                setTimeout(() => {
+                    setRemoteCursors(prev => {
+                        if (prev[cursor.userId]?.lastSeen !== lastSeen) return prev;
+                        const next = { ...prev };
+                        delete next[cursor.userId];
+                        return next;
+                    });
+                }, 4500);
+            }
+        };
+
+        const handleStrokeLived = (data) => {
+            if (data && data.userId && data.element) {
+                setRemoteLiveStrokes(prev => ({
+                    ...prev,
+                    [data.userId]: {
+                        ...data.element,
+                        color: data.color || data.element.color,
+                    }
+                }));
+            }
+        };
+
+        const handleSelected = (data) => {
+            if (data && data.userId) {
+                setRemoteSelections(prev => ({
+                    ...prev,
+                    [data.userId]: {
+                        elementId: data.elementId,
+                        name: data.name,
+                        color: data.color,
+                        timestamp: Date.now(),
+                    }
                 }));
             }
         };
@@ -129,11 +178,15 @@ export default function CanvasEditor() {
         socket.on("canvas-changed", handleCanvasChanged);
         socket.on("active-users", handleActiveUsers);
         socket.on("canvas-cursor-moved", handleCursorMoved);
+        socket.on("canvas-stroke-lived", handleStrokeLived);
+        socket.on("canvas-selected", handleSelected);
 
         return () => {
             socket.off("canvas-changed", handleCanvasChanged);
             socket.off("active-users", handleActiveUsers);
             socket.off("canvas-cursor-moved", handleCursorMoved);
+            socket.off("canvas-stroke-lived", handleStrokeLived);
+            socket.off("canvas-selected", handleSelected);
             leaveDocumentRoom(docId);
         };
     }, [docId]);
@@ -147,7 +200,7 @@ export default function CanvasEditor() {
         emitCanvasChange(docId, elements, camera);
         setSavedStatus('Syncing canvas live...');
         setTimeout(() => setSavedStatus('All changes synced'), 2000);
-    }, [elements]);
+    }, [elements, camera, docId]);
 
     const handleClose = () => {
         if (returnCollection && returnCollection !== 'General') {
@@ -309,8 +362,69 @@ export default function CanvasEditor() {
             }
         });
 
+        // 1. Render in-progress strokes from live collaborators (Figma-style)
+        Object.values(remoteLiveStrokes).forEach(element => {
+            if (!element) return;
+            ctx.save();
+            ctx.beginPath();
+            ctx.strokeStyle = element.color || '#6366f1';
+            ctx.lineWidth = element.width || 5;
+            ctx.globalAlpha = 0.88;
+            if (element.type === 'path') {
+                if (!element.points || element.points.length === 0) return;
+                ctx.lineCap = 'round';
+                ctx.lineJoin = 'round';
+                ctx.moveTo(element.points[0].x, element.points[0].y);
+                for (let i = 1; i < element.points.length; i++) {
+                    ctx.lineTo(element.points[i].x, element.points[i].y);
+                }
+                ctx.stroke();
+            } else if (element.type === 'rectangle') {
+                ctx.rect(element.x, element.y, element.w, element.h);
+                ctx.stroke();
+            } else if (element.type === 'circle') {
+                const rx = Math.abs(element.w / 2);
+                const ry = Math.abs(element.h / 2);
+                const cx = element.x + element.w / 2;
+                const cy = element.y + element.h / 2;
+                ctx.ellipse(cx, cy, rx, ry, 0, 0, Math.PI * 2);
+                ctx.stroke();
+            }
+            ctx.restore();
+        });
+
+        // 2. Render Figma-style colored selection bounding boxes for collaborators
+        Object.values(remoteSelections).forEach(sel => {
+            if (!sel || !sel.elementId) return;
+            if (Date.now() - (sel.timestamp || 0) > 10000) return;
+            const targetEl = elements.find(el => el.id === sel.elementId);
+            if (!targetEl) return;
+            const bounds = getElementBounds(targetEl);
+            if (!bounds) return;
+
+            ctx.save();
+            ctx.strokeStyle = sel.color || '#6366f1';
+            ctx.lineWidth = 2 / camera.zoom;
+            ctx.setLineDash([4 / camera.zoom, 4 / camera.zoom]);
+            const pad = 6;
+            ctx.strokeRect(bounds.minX - pad, bounds.minY - pad, (bounds.maxX - bounds.minX) + pad * 2, (bounds.maxY - bounds.minY) + pad * 2);
+
+            // Collaborator Name Tag
+            ctx.setLineDash([]);
+            ctx.fillStyle = sel.color || '#6366f1';
+            const tagHeight = 16 / camera.zoom;
+            const text = sel.name || 'Collaborator';
+            ctx.font = `bold ${Math.max(10, 11 / camera.zoom)}px sans-serif`;
+            const textWidth = ctx.measureText(text).width;
+            ctx.fillRect(bounds.minX - pad, bounds.minY - pad - tagHeight, textWidth + (10 / camera.zoom), tagHeight);
+            ctx.fillStyle = '#ffffff';
+            ctx.textBaseline = 'middle';
+            ctx.fillText(text, bounds.minX - pad + (5 / camera.zoom), bounds.minY - pad - (tagHeight / 2));
+            ctx.restore();
+        });
+
         ctx.globalCompositeOperation = 'source-over';
-    }, [elements, camera]);
+    }, [elements, camera, remoteLiveStrokes, remoteSelections]);
 
     useEffect(() => {
         renderGrid();
@@ -438,7 +552,9 @@ export default function CanvasEditor() {
         // Middle mouse, Space, or Pan tool
         if (e.button === 1 || tool === 'pan' || e.shiftKey) {
             if (e.target.setPointerCapture && e.pointerId !== undefined) {
-                try { e.target.setPointerCapture(e.pointerId); } catch {}
+                try { e.target.setPointerCapture(e.pointerId); } catch {
+                    // The pointer may have been released before capture was requested.
+                }
             }
             setIsPanning(true);
             setLastPointerPosition(pos);
@@ -494,7 +610,9 @@ export default function CanvasEditor() {
 
             // Drawing tools
             if (e.target.setPointerCapture && e.pointerId !== undefined) {
-                try { e.target.setPointerCapture(e.pointerId); } catch {}
+                try { e.target.setPointerCapture(e.pointerId); } catch {
+                    // The pointer may have been released before capture was requested.
+                }
             }
             setIsDrawing(true);
 
@@ -550,14 +668,22 @@ export default function CanvasEditor() {
                 const lastEl = prev[prev.length - 1];
                 if (!lastEl) return prev;
                 
+                let newEl;
                 if (lastEl.type === 'path') {
-                    const newEl = { ...lastEl, points: [...lastEl.points, canvasPos] };
-                    return [...prev.slice(0, -1), newEl];
+                    newEl = { ...lastEl, points: [...lastEl.points, canvasPos] };
                 } else if (lastEl.type === 'rectangle' || lastEl.type === 'circle') {
-                    const newEl = { ...lastEl, w: canvasPos.x - lastEl.x, h: canvasPos.y - lastEl.y };
-                    return [...prev.slice(0, -1), newEl];
+                    newEl = { ...lastEl, w: canvasPos.x - lastEl.x, h: canvasPos.y - lastEl.y };
+                } else {
+                    return prev;
                 }
-                return prev;
+
+                // Throttle live stroke emission to collaborators (~35ms)
+                if (Date.now() - lastLiveStrokeEmitRef.current > 35) {
+                    lastLiveStrokeEmitRef.current = Date.now();
+                    emitCanvasStrokeLive(docId, newEl);
+                }
+
+                return [...prev.slice(0, -1), newEl];
             });
         }
     };
@@ -569,7 +695,9 @@ export default function CanvasEditor() {
         if (canvasRef.current && e.pointerId !== undefined) {
             try {
                 canvasRef.current.releasePointerCapture(e.pointerId);
-            } catch {}
+            } catch {
+                // The browser may already have released this pointer capture.
+            }
         }
     };
 
@@ -856,17 +984,18 @@ export default function CanvasEditor() {
                     </div>
                 )}
                 
-                {/* Live Remote Collaborator Cursors */}
+                {/* Live Remote Collaborator Cursors (Hardware-Accelerated 60fps) */}
                 {Object.values(remoteCursors).map((rc) => {
                     const screenX = rc.x * camera.zoom + camera.x;
                     const screenY = rc.y * camera.zoom + camera.y;
                     return (
                         <div
                             key={rc.userId}
-                            className="absolute pointer-events-none transition-all duration-75 z-30"
+                            className="absolute pointer-events-none z-30 transition-transform duration-75 ease-out select-none will-change-transform"
                             style={{
-                                left: `${screenX}px`,
-                                top: `${screenY}px`,
+                                transform: `translate3d(${screenX}px, ${screenY}px, 0)`,
+                                left: 0,
+                                top: 0,
                             }}
                         >
                             <svg className="w-5 h-5 drop-shadow-md" viewBox="0 0 24 24" fill={rc.color || '#6366f1'}>
@@ -874,8 +1003,9 @@ export default function CanvasEditor() {
                             </svg>
                             <div
                                 style={{ backgroundColor: rc.color || '#6366f1' }}
-                                className="px-2 py-0.5 rounded-full text-[10px] font-semibold text-white shadow-lg whitespace-nowrap ml-3 -mt-1 select-none"
+                                className="px-2 py-0.5 rounded-full text-[10px] font-semibold text-white shadow-lg whitespace-nowrap ml-3 -mt-1 select-none flex items-center gap-1"
                             >
+                                <span className="w-1.5 h-1.5 rounded-full bg-white/80 animate-pulse" />
                                 {rc.name}
                             </div>
                         </div>

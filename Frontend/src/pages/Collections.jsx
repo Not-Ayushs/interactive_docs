@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import AppNavbar from '../components/AppNavbar.jsx';
 import Background from '../components/Background.jsx';
@@ -18,7 +18,20 @@ const INITIAL_COLLECTIONS = [
 
 export default function Collections() {
     const navigate = useNavigate();
-    const [collections, setCollections] = useState([]);
+    const [collections, setCollections] = useState(() => {
+        const saved = localStorage.getItem('DOCS_COLLECTIONS');
+        if (!saved) return INITIAL_COLLECTIONS;
+        try {
+            const parsed = JSON.parse(saved);
+            const combined = [...parsed];
+            INITIAL_COLLECTIONS.forEach((item) => {
+                if (!combined.some((collection) => collection.title === item.title)) combined.push(item);
+            });
+            return combined;
+        } catch {
+            return INITIAL_COLLECTIONS;
+        }
+    });
     const [docCounts, setDocCounts] = useState({});
     const [showModal, setShowModal] = useState(false);
     const [modalMode, setModalMode] = useState('create'); // 'create' or 'rename'
@@ -28,28 +41,6 @@ export default function Collections() {
     const [activeMenuId, setActiveMenuId] = useState(null);
     const [showShareModal, setShowShareModal] = useState(false);
     const [shareColName, setShareColName] = useState('');
-
-    useEffect(() => {
-        const saved = localStorage.getItem('DOCS_COLLECTIONS');
-        if (saved) {
-            try {
-                const parsed = JSON.parse(saved);
-                // Ensure default collections like General are present
-                const combined = [...parsed];
-                INITIAL_COLLECTIONS.forEach(ic => {
-                    if (!combined.some(c => c.title === ic.title)) {
-                        combined.push(ic);
-                    }
-                });
-                setCollections(combined);
-            } catch (e) {
-                setCollections(INITIAL_COLLECTIONS);
-            }
-        } else {
-            setCollections(INITIAL_COLLECTIONS);
-            localStorage.setItem('DOCS_COLLECTIONS', JSON.stringify(INITIAL_COLLECTIONS));
-        }
-    }, []);
 
     // Fetch document counts & dynamically sync collections with MongoDB documents
     useEffect(() => {

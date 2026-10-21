@@ -346,12 +346,13 @@ app.put("/api/documents/:id", protect, async (req, res) => {
       return res.status(403).json({ message: "Unauthorized to edit this document" });
     }
 
-    const { desc, canvasData, title, collectionName, tag } = req.body;
+    const { desc, canvasData, title, collectionName, tag, researchItems } = req.body;
     if (desc !== undefined) doc.desc = desc;
     if (canvasData !== undefined) doc.canvasData = canvasData;
     if (title !== undefined) doc.title = title;
     if (collectionName !== undefined) doc.collectionName = collectionName;
     if (tag !== undefined) doc.tag = tag;
+    if (researchItems !== undefined) doc.researchItems = researchItems;
 
     const updatedDoc = await doc.save();
 

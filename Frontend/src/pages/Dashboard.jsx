@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useSelector, useDispatch } from 'react-redux';
 import { toggleSidebar } from '../store/uiSlice';
@@ -11,6 +11,8 @@ import { FiSearch, FiPlus, FiMenu, FiUsers, FiFolder } from 'react-icons/fi';
 import { getApiBaseUrl } from '../utils/api.js';
 import { getSocket } from '../utils/socket.js';
 
+import StressBusterMode from '../components/StressBusterMode.jsx';
+
 const DEFAULT_SHORTCUTS = [
     { title: 'Promotion', edited: 'Edited 2 days ago' },
     { title: 'Store', edited: 'Edited 5 days ago' },
@@ -22,10 +24,22 @@ const DEFAULT_SHORTCUTS = [
 export default function Dashboard() {
     const navigate = useNavigate();
     const [documents, setDocuments] = useState([]);
-    const [shortcuts, setShortcuts] = useState(DEFAULT_SHORTCUTS);
+    const [shortcuts] = useState(() => {
+        try {
+            const userCols = JSON.parse(localStorage.getItem('DOCS_COLLECTIONS') || '[]');
+            if (!Array.isArray(userCols) || userCols.length === 0) return DEFAULT_SHORTCUTS;
+            return [
+                ...userCols.map(c => ({ title: c.title, edited: 'Edited recently' })),
+                ...DEFAULT_SHORTCUTS.filter(ds => !userCols.some(uc => uc.title === ds.title))
+            ];
+        } catch {
+            return DEFAULT_SHORTCUTS;
+        }
+    });
     const [searchQuery, setSearchQuery] = useState('');
     const [showAddModal, setShowAddModal] = useState(false);
     const [filterCollabOnly, setFilterCollabOnly] = useState(false);
+    const [showStressBuster, setShowStressBuster] = useState(false);
     const sidebarOpen = useSelector((state) => state.ui.sidebarOpen);
     const dispatch = useDispatch();
 
@@ -63,22 +77,6 @@ export default function Dashboard() {
             socket.off("document-shared", handleRefresh);
             socket.off("collection-shared", handleRefresh);
         };
-    }, []);
-
-    useEffect(() => {
-        const saved = localStorage.getItem('DOCS_COLLECTIONS');
-        if (saved) {
-            try {
-                const userCols = JSON.parse(saved);
-                if (Array.isArray(userCols) && userCols.length > 0) {
-                    const combined = [
-                        ...userCols.map(c => ({ title: c.title, edited: 'Edited recently' })),
-                        ...DEFAULT_SHORTCUTS.filter(ds => !userCols.some(uc => uc.title === ds.title))
-                    ];
-                    setShortcuts(combined);
-                }
-            } catch (e) {}
-        }
     }, []);
 
     const handleAddDoc = (newDoc) => {
@@ -144,6 +142,15 @@ export default function Dashboard() {
                         </div>
                         
                         <div className="flex gap-2">
+                            <button
+                                onClick={() => setShowStressBuster(true)}
+                                className="flex items-center gap-1.5 px-3 py-2 text-xs font-semibold rounded-xl border border-rose-500/40 bg-gradient-to-r from-rose-600/25 to-amber-600/20 text-rose-300 hover:text-white hover:border-rose-400 transition-all shadow-md shadow-rose-950/30 cursor-pointer group"
+                                title="Stress Buster Mode: Toss cards, shred docs, and launch origami planes!"
+                            >
+                                <span className="text-sm group-hover:scale-125 transition-transform duration-200">🔥</span>
+                                <span>Play Mode</span>
+                            </button>
+
                             <button
                                 onClick={() => setFilterCollabOnly(prev => !prev)}
                                 className={`flex items-center gap-1.5 px-3 py-2 text-xs font-medium rounded-xl border transition-colors cursor-pointer ${
@@ -243,6 +250,13 @@ export default function Dashboard() {
                 setShowModal={setShowAddModal} 
                 onAdd={handleAddDoc} 
             />
+
+            {showStressBuster && (
+                <StressBusterMode
+                    documents={documents}
+                    onClose={() => setShowStressBuster(false)}
+                />
+            )}
         </div>
     );
 }

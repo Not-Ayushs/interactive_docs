@@ -1,5 +1,4 @@
-import React from 'react';
-import { FiLayers, FiFileText, FiFolder, FiZap, FiDownload } from 'react-icons/fi';
+import { FiLayers, FiFolder, FiZap, FiDownload } from 'react-icons/fi';
 
 const FEATURES = [
     {

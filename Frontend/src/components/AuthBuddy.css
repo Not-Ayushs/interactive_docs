@@ -1,0 +1,45 @@
+.auth-buddy {
+  width: 160px;
+  height: 92px;
+  position: relative;
+  margin: 0 auto 14px;
+  display: grid;
+  place-items: center;
+  animation: auth-buddy-float 4s ease-in-out infinite;
+}
+
+.auth-buddy svg {
+  width: 160px;
+  height: 86px;
+  overflow: visible;
+}
+
+.auth-buddy__eye { fill: #fff; stroke: #d4d4d8; stroke-width: 2; }
+.auth-buddy__eyes { transform-box: fill-box; transform-origin: center; animation: auth-buddy-blink 5.2s ease-in-out infinite; }
+.auth-buddy__pupils { transform-box: fill-box; transform-origin: center; transition: transform 280ms ease; }
+.auth-buddy__pupil { fill: #171717; }
+.auth-buddy__glint { fill: #fff; }
+.auth-buddy--idle .auth-buddy__pupils { animation: auth-buddy-peek 4.8s ease-in-out infinite; }
+.auth-buddy--curious .auth-buddy__pupils { transform: translateY(3px); }
+.auth-buddy--password .auth-buddy__pupils { transform: translate(5px, -3px); }
+.auth-buddy--caught .auth-buddy__pupils { transform: translate(-5px, -2px); }
+
+@keyframes auth-buddy-float {
+  0%, 100% { transform: translateY(0); }
+  50% { transform: translateY(-2px); }
+}
+
+@keyframes auth-buddy-peek {
+  0%, 36%, 48%, 100% { transform: translate(0, 0); }
+  40%, 44% { transform: translate(3px, 1px); }
+}
+
+@keyframes auth-buddy-blink {
+  0%, 8%, 10%, 52%, 54%, 100% { transform: scaleY(1); }
+  9%, 53% { transform: scaleY(.08); }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .auth-buddy, .auth-buddy__eyes, .auth-buddy--idle .auth-buddy__pupils { animation: none; }
+  .auth-buddy__pupils { transition: none; }
+}

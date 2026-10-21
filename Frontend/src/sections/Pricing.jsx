@@ -1,4 +1,3 @@
-import React from 'react';
 import { Link } from 'react-router-dom';
 import CapsuleButton from '../components/CapsuleButton.jsx';
 import { FiCheck } from 'react-icons/fi';

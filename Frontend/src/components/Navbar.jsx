@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import CapsuleButton from './CapsuleButton';
 import { FiMenu, FiX } from 'react-icons/fi';
@@ -56,21 +56,13 @@ export default function Navbar() {
                 <div className="hidden md:flex items-center gap-3">
                     {isLoggedIn ? (
                         <>
-                            <Link to="/app/dashboard">
-                                <CapsuleButton label="Dashboard" type="active" className="px-5 py-2 text-sm font-semibold" />
-                            </Link>
-                            <button onClick={handleLogout}>
-                                <CapsuleButton label="Logout" type="outline" className="px-5 py-2 text-sm font-semibold cursor-pointer" />
-                            </button>
+                            <CapsuleButton onClick={() => navigate('/app/dashboard')} label="Dashboard" type="active" className="px-5 py-2 text-sm font-semibold" />
+                            <CapsuleButton onClick={handleLogout} label="Logout" type="outline" className="px-5 py-2 text-sm font-semibold cursor-pointer" />
                         </>
                     ) : (
                         <>
-                            <Link to="/login">
-                                <CapsuleButton label="Sign In" type="outline" className="px-5 py-2 text-sm font-semibold" />
-                            </Link>
-                            <Link to="/signup">
-                                <CapsuleButton label="Sign Up" type="active" className="px-5 py-2 text-sm font-semibold" />
-                            </Link>
+                            <CapsuleButton onClick={() => navigate('/login')} label="Sign In" type="outline" className="px-5 py-2 text-sm font-semibold" />
+                            <CapsuleButton onClick={() => navigate('/signup')} label="Sign Up" type="active" className="px-5 py-2 text-sm font-semibold" />
                         </>
                     )}
                 </div>
@@ -101,21 +93,13 @@ export default function Navbar() {
                     <div className="flex flex-col gap-3 pt-2">
                         {isLoggedIn ? (
                             <>
-                                <Link to="/app/dashboard" onClick={() => setMobileOpen(false)}>
-                                    <CapsuleButton label="Dashboard" type="active" className="w-full py-2.5 text-sm font-semibold" />
-                                </Link>
-                                <button onClick={() => { setMobileOpen(false); handleLogout(); }}>
-                                    <CapsuleButton label="Logout" type="outline" className="w-full py-2.5 text-sm font-semibold cursor-pointer" />
-                                </button>
+                                <CapsuleButton onClick={() => { setMobileOpen(false); navigate('/app/dashboard'); }} label="Dashboard" type="active" className="w-full py-2.5 text-sm font-semibold" />
+                                <CapsuleButton onClick={() => { setMobileOpen(false); handleLogout(); }} label="Logout" type="outline" className="w-full py-2.5 text-sm font-semibold cursor-pointer" />
                             </>
                         ) : (
                             <>
-                                <Link to="/login" onClick={() => setMobileOpen(false)}>
-                                    <CapsuleButton label="Sign In" type="outline" className="w-full py-2.5 text-sm font-semibold" />
-                                </Link>
-                                <Link to="/signup" onClick={() => setMobileOpen(false)}>
-                                    <CapsuleButton label="Sign Up" type="active" className="w-full py-2.5 text-sm font-semibold" />
-                                </Link>
+                                <CapsuleButton onClick={() => { setMobileOpen(false); navigate('/login'); }} label="Sign In" type="outline" className="w-full py-2.5 text-sm font-semibold" />
+                                <CapsuleButton onClick={() => { setMobileOpen(false); navigate('/signup'); }} label="Sign Up" type="active" className="w-full py-2.5 text-sm font-semibold" />
                             </>
                         )}
                     </div>

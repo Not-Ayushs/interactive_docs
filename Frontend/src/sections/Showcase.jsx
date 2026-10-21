@@ -1,5 +1,4 @@
-import React from 'react';
-import { FiCheckCircle, FiFolder, FiDownload } from 'react-icons/fi';
+import { FiCheckCircle, FiFolder } from 'react-icons/fi';
 
 export default function Showcase() {
     return (

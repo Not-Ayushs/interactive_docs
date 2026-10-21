@@ -1,6 +1,6 @@
-import React, { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { FiSearch, FiPlus, FiDownload, FiTrash2, FiShare2, FiUsers } from 'react-icons/fi';
+import { FiSearch, FiPlus, FiTrash2, FiShare2, FiUsers } from 'react-icons/fi';
 import { FaCrown } from 'react-icons/fa';
 import { DragDropContext, Droppable, Draggable } from '@hello-pangea/dnd';
 import { getApiBaseUrl } from '../utils/api.js';
@@ -85,14 +85,14 @@ const KanbanColumn = ({ title, docs, onCardClick, onAddClick }) => {
     );
 };
 
-export default function KanbanBoard({ collectionName, onAddClick }) {
+export default function KanbanBoard({ collectionName }) {
     const navigate = useNavigate();
     const [searchQuery, setSearchQuery] = useState('');
     const [cards, setCards] = useState([]);
     const [loading, setLoading] = useState(true);
     const token = localStorage.getItem('token');
 
-    const fetchCards = async () => {
+    const fetchCards = useCallback(async () => {
         try {
             const res = await fetch(`${apiBaseUrl}/api/kanban?collectionName=${collectionName || 'General'}`, {
                 headers: { 'Authorization': `Bearer ${token}` }
@@ -107,11 +107,26 @@ export default function KanbanBoard({ collectionName, onAddClick }) {
         } finally {
             setLoading(false);
         }
-    };
+    }, [collectionName, token]);
 
     useEffect(() => {
-        fetchCards();
-    }, [collectionName]);
+        let cancelled = false;
+        const loadCards = async () => {
+            try {
+                const res = await fetch(`${apiBaseUrl}/api/kanban?collectionName=${collectionName || 'General'}`, {
+                    headers: { 'Authorization': `Bearer ${token}` }
+                });
+                const data = await res.json();
+                if (!cancelled && Array.isArray(data)) setCards(data);
+            } catch (error) {
+                if (!cancelled) console.error("Error fetching kanban cards:", error);
+            } finally {
+                if (!cancelled) setLoading(false);
+            }
+        };
+        loadCards();
+        return () => { cancelled = true; };
+    }, [collectionName, token]);
 
     // Real-time socket sync on shares
     useEffect(() => {
@@ -125,7 +140,7 @@ export default function KanbanBoard({ collectionName, onAddClick }) {
             socket.off("collection-shared", handleRefresh);
             socket.off("document-shared", handleRefresh);
         };
-    }, [collectionName]);
+    }, [collectionName, fetchCards]);
 
     const [showCreateModal, setShowCreateModal] = useState(false);
     const [showShareModal, setShowShareModal] = useState(false);
@@ -183,7 +198,6 @@ export default function KanbanBoard({ collectionName, onAddClick }) {
         }
 
         // Optimistic update
-        const sourceStatus = source.droppableId;
         const destStatus = destination.droppableId;
 
         const newCards = Array.from(cards);

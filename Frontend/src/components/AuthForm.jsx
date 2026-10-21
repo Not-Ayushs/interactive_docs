@@ -1,9 +1,38 @@
-import React from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { Link } from 'react-router-dom';
+import AuthBuddy from './AuthBuddy.jsx';
+import './AuthBuddy.css';
 
 const AuthForm = ({ title, subtitle, type, onSubmit, onChange, error, isLoading }) => {
+  const [focusedField, setFocusedField] = useState('');
+  const [caught, setCaught] = useState(false);
+  const caughtTimer = useRef(null);
+
+  useEffect(() => () => clearTimeout(caughtTimer.current), []);
+
+  const buddyMood = focusedField === 'password'
+    ? 'password'
+    : focusedField === 'name' || focusedField === 'email'
+      ? 'curious'
+      : caught ? 'caught' : 'idle';
+
+  const handleBuddyCaught = () => {
+    if (focusedField) return;
+    setCaught(true);
+    clearTimeout(caughtTimer.current);
+    caughtTimer.current = setTimeout(() => setCaught(false), 700);
+  };
+
+  const handleFieldFocus = (event) => {
+    setFocusedField(event.target.name);
+    setCaught(false);
+  };
+
+  const handleFieldBlur = () => setFocusedField('');
+
   return (
     <div className="w-full max-w-md mx-auto p-6 sm:p-8 rounded-xl bg-[#0F0F11] border border-zinc-800 text-white shadow-2xl">
+      <AuthBuddy mood={buddyMood} onCaught={handleBuddyCaught} />
       <div className="flex justify-between items-baseline mb-2 gap-4">
         <h1 className="text-xl sm:text-2xl font-semibold tracking-tight">{title}</h1>
         {type === 'login' ? (
@@ -24,6 +53,8 @@ const AuthForm = ({ title, subtitle, type, onSubmit, onChange, error, isLoading 
               name="name"
               type="text" 
               required
+              onFocus={handleFieldFocus}
+              onBlur={handleFieldBlur}
               onChange={onChange}
               placeholder="John Doe" 
               className="flex h-10 w-full rounded-md border border-zinc-700 bg-zinc-900 px-3 py-2 text-sm ring-offset-zinc-950 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-zinc-300 focus-visible:ring-offset-2"
@@ -36,6 +67,8 @@ const AuthForm = ({ title, subtitle, type, onSubmit, onChange, error, isLoading 
             name="email"
             type="email" 
             required
+            onFocus={handleFieldFocus}
+            onBlur={handleFieldBlur}
             onChange={onChange}
             placeholder="m@example.com" 
             className="flex h-10 w-full rounded-md border border-zinc-700 bg-zinc-900 px-3 py-2 text-sm ring-offset-zinc-950 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-zinc-300 focus-visible:ring-offset-2"
@@ -50,6 +83,8 @@ const AuthForm = ({ title, subtitle, type, onSubmit, onChange, error, isLoading 
             name="password"
             type="password" 
             required
+            onFocus={handleFieldFocus}
+            onBlur={handleFieldBlur}
             onChange={onChange}
             className="flex h-10 w-full rounded-md border border-zinc-700 bg-zinc-900 px-3 py-2 text-sm ring-offset-zinc-950 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-zinc-300 focus-visible:ring-offset-2"
           />
